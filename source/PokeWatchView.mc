@@ -28,35 +28,27 @@ class PokeWatchView extends Ui.WatchFace {
     var canvas_w = 0;
     var centerpoint = [0,0];
     
-	// Link bitmap instance
+	// Pokemon bitmap instances
 	var charmander = new Ui.Bitmap({
 		:rezId=>Rez.Drawables.charmander,
-        :locX=>105,
-        :locY=>90
+        :locX=>150,
+        :locY=>60
     });
     
     var pikachu = new Ui.Bitmap({
     	:rezId=>Rez.Drawables.pikachu_behind,
-        :locX=>15,
-        :locY=>190
-    });
-    
-    var timeString = "";
-    
-    // Button instance
-    var buttonTest = new Ui.Button({
-    	
+        :locX=>25,
+        :locY=>150
     });
 
     // Time variables
+    var timeString = "";
     var hour = null;
     var minute = null;
     var day = null;
     var day_of_week = null;
     var month_str = null;
     var month = null;
-    
-    var linkResourcce = null;
     
     
     function initialize() {
@@ -92,7 +84,7 @@ class PokeWatchView extends Ui.WatchFace {
         //month_str = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM).month;
     	
     	// Clear canvas
-    	dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
+    	dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_WHITE);
         dc.clear();
 
         // Get and show the current time
@@ -100,8 +92,7 @@ class PokeWatchView extends Ui.WatchFace {
 
 		charmander.draw(dc);
 		pikachu.draw(dc);
-		//timeString.draw(dc);
-        //dc.drawBitmap(50, 50, linkResource);
+
         dc.drawText(30, 50, Gfx.FONT_LARGE, timeString, Gfx.TEXT_JUSTIFY_LEFT);
         
         
@@ -144,16 +135,5 @@ class PokeWatchView extends Ui.WatchFace {
     		TIMER_1.stop();
 		}
 		TIMER_STEPS = TIMER_TIMEOUT;
-    }
-    
-    // Helper function
-    function rotatePoint(origin, point, angle) {
-		var radians = angle * Math.PI / 180.0;
-		var cos = Math.cos(radians);
-		var sin = Math.sin(radians);
-		var dX = point[0] - origin[0];
-		var dY = point[1] - origin[1];
-		
-		return [ cos * dX - sin * dY + origin[0], sin * dX + cos * dY + origin[1]];
     }
 }
