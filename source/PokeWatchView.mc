@@ -86,10 +86,10 @@ class PokeWatchView extends Ui.WatchFace {
     	var date = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
     	hour = clockTime.hour;
 	    minute = clockTime.min;
-        day = date.day;
-        month = date.month;
-        day_of_week = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM).day_of_week;
-        month_str = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM).month;
+        //day = date.day;
+        //month = date.month;
+        //day_of_week = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM).day_of_week;
+        //month_str = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM).month;
     	
     	// Clear canvas
     	dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
