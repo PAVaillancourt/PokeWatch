@@ -1,0 +1,5 @@
+<drawables>
+    <bitmap id="LauncherIcon" filename="launcher_icon.png" />
+    <bitmap id="charmander" filename="charmander.png" />
+    <bitmap id="pikachu_behind" filename="pikachu_behind.png" />
+</drawables>
