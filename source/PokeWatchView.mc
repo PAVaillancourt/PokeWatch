@@ -52,6 +52,13 @@ class PokeWatchView extends Ui.WatchFace {
     var half_border_enemy = null;
     var half_border_self = null;
 
+    // Fonts
+    //! TODO reduce font size (with BMFont)
+    var poke_time = null;
+    var poke_text_medium = null;
+    var poke_text_small = null;
+    var poke_text_tiny_bold = null;
+
     // Time variables
     var timeString = "";
     var hour = null;
@@ -69,6 +76,11 @@ class PokeWatchView extends Ui.WatchFace {
     	centerpoint = [canvas_w/2, canvas_h/2];
     	    	
         setLayout(Rez.Layouts.WatchFace(dc));
+        
+        poke_time = Ui.loadResource(Rez.Fonts.poke_time);
+        poke_text_medium = Ui.loadResource(Rez.Fonts.poke_text_medium);
+        poke_text_small = Ui.loadResource(Rez.Fonts.poke_text_small);
+        poke_text_tiny_bold = Ui.loadResource(Rez.Fonts.poke_text_tiny_bold);
         
         health_full = Ui.loadResource(Rez.Drawables.health_full);
         half_border_enemy = Ui.loadResource(Rez.Drawables.half_border_enemy);
@@ -97,8 +109,9 @@ class PokeWatchView extends Ui.WatchFace {
 	    minute = clockTime.min;
     	
     	// Clear canvas
-    	dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
+    	dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_WHITE);
         dc.clear();
+        dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
 
         // Get and show the current time
         var timeString = Lang.format("$1$:$2$", [hour, minute.format("%02d")]);
@@ -107,21 +120,24 @@ class PokeWatchView extends Ui.WatchFace {
 		pikachu.draw(dc);
 		
 		//TODO reformat x and y according to canvas_w and canvas_h
-        dc.drawText(canvas_w/2, 10, Gfx.FONT_TINY, timeString, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(canvas_w/2, 20, poke_time, timeString, Gfx.TEXT_JUSTIFY_CENTER);
         
         // Oponent side
-        dc.drawText(10, 65, Gfx.FONT_XTINY, charmander_name, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawText(45, 80, Gfx.FONT_XTINY, charmander_lvl, Gfx.TEXT_JUSTIFY_LEFT);
-		dc.drawText(20, 100, Gfx.FONT_XTINY, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawBitmap(45, 103, health_full);
-        dc.drawBitmap(5, 90, half_border_enemy);
+        var enemy_name_pos = [15, canvas_h/4 + 5];        
+        dc.drawText(enemy_name_pos[0], enemy_name_pos[1], poke_text_small, charmander_name, Gfx.TEXT_JUSTIFY_LEFT);
+        //! TODO split ":L" and "[pokemon_lvl]" in two string, onme smaller and bold, the other one normal
+        dc.drawText(enemy_name_pos[0]+30, enemy_name_pos[1]+15, poke_text_small, charmander_lvl, Gfx.TEXT_JUSTIFY_LEFT);
+		dc.drawText(enemy_name_pos[0]+5, enemy_name_pos[1]+30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawBitmap(enemy_name_pos[0]+25, enemy_name_pos[1]+25, health_full);
+        dc.drawBitmap(enemy_name_pos[0]-10, enemy_name_pos[1]+15, half_border_enemy);
         
         // Player side
-        dc.drawText(canvas_w/2-15, 130, Gfx.FONT_TINY, pikachu_name, Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawText(157, 150, Gfx.FONT_XTINY, pikachu_lvl, Gfx.TEXT_JUSTIFY_LEFT);
-		dc.drawText(canvas_w/2-15, 165, Gfx.FONT_XTINY, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawBitmap(130, 168, health_full);
-        dc.drawBitmap(100, 162, half_border_self);
+        var self_name_pos = [canvas_w/2-15, canvas_h/2 + 20];
+        dc.drawText(self_name_pos[0], self_name_pos[1], poke_text_medium, pikachu_name, Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawText(self_name_pos[0] + 50, self_name_pos[1] + 15, poke_text_small, pikachu_lvl, Gfx.TEXT_JUSTIFY_LEFT);
+		dc.drawText(self_name_pos[0], self_name_pos[1] + 30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawBitmap(self_name_pos[0] + 20, self_name_pos[1] + 25, health_full);
+        dc.drawBitmap(self_name_pos[0] - 10, self_name_pos[1] + 20, half_border_self);
         
         
         // Call the parent onUpdate function to redraw the layout
