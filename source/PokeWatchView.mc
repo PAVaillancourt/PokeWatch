@@ -28,11 +28,11 @@ class PokeWatchView extends Ui.WatchFace {
     var canvas_w = 0;
     var centerpoint = [0,0];
     
-	// Pokemon bitmap instances
+	// Pokemon bitmap single instances
 	var charmander = new Ui.Bitmap({
 		:rezId=>Rez.Drawables.charmander,
-        :locX=>150,
-        :locY=>60
+        :locX=>145,
+        :locY=>50
     });
     
     var pikachu = new Ui.Bitmap({
@@ -40,15 +40,22 @@ class PokeWatchView extends Ui.WatchFace {
         :locX=>25,
         :locY=>150
     });
+    
+ 
+    // Multiple instances get resource loaded
+    var pikachu_name = null;
+    var pikachu_lvl = null;
+    var charmander_name = null;
+    var charmander_lvl = null;
+    var pok_hp = null;
+    var health_full = null;
+    var half_border_enemy = null;
+    var half_border_self = null;
 
     // Time variables
     var timeString = "";
     var hour = null;
     var minute = null;
-    var day = null;
-    var day_of_week = null;
-    var month_str = null;
-    var month = null;
     
     
     function initialize() {
@@ -62,6 +69,17 @@ class PokeWatchView extends Ui.WatchFace {
     	centerpoint = [canvas_w/2, canvas_h/2];
     	    	
         setLayout(Rez.Layouts.WatchFace(dc));
+        
+        health_full = Ui.loadResource(Rez.Drawables.health_full);
+        half_border_enemy = Ui.loadResource(Rez.Drawables.half_border_enemy);
+        half_border_self = Ui.loadResource(Rez.Drawables.half_border_self);
+        
+        pikachu_name = "PIKACHU";
+        pikachu_lvl = ":L9";
+        
+        charmander_name = "CHARMANDER";
+        charmander_lvl = ":L12";
+        pok_hp = "HP:";
     }
 
     // Called when this View is brought to the foreground. Restore
@@ -75,16 +93,11 @@ class PokeWatchView extends Ui.WatchFace {
     	
     	// Get time and date
     	var clockTime = Sys.getClockTime();
-    	var date = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
     	hour = clockTime.hour;
 	    minute = clockTime.min;
-        //day = date.day;
-        //month = date.month;
-        //day_of_week = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM).day_of_week;
-        //month_str = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM).month;
     	
     	// Clear canvas
-    	dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_WHITE);
+    	dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
         dc.clear();
 
         // Get and show the current time
@@ -92,12 +105,27 @@ class PokeWatchView extends Ui.WatchFace {
 
 		charmander.draw(dc);
 		pikachu.draw(dc);
-
-        dc.drawText(30, 50, Gfx.FONT_LARGE, timeString, Gfx.TEXT_JUSTIFY_LEFT);
+		
+		//TODO reformat x and y according to canvas_w and canvas_h
+        dc.drawText(canvas_w/2, 10, Gfx.FONT_TINY, timeString, Gfx.TEXT_JUSTIFY_CENTER);
+        
+        // Oponent side
+        dc.drawText(10, 65, Gfx.FONT_XTINY, charmander_name, Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawText(45, 80, Gfx.FONT_XTINY, charmander_lvl, Gfx.TEXT_JUSTIFY_LEFT);
+		dc.drawText(20, 100, Gfx.FONT_XTINY, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawBitmap(45, 103, health_full);
+        dc.drawBitmap(5, 90, half_border_enemy);
+        
+        // Player side
+        dc.drawText(canvas_w/2-15, 130, Gfx.FONT_TINY, pikachu_name, Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawText(157, 150, Gfx.FONT_XTINY, pikachu_lvl, Gfx.TEXT_JUSTIFY_LEFT);
+		dc.drawText(canvas_w/2-15, 165, Gfx.FONT_XTINY, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
+        dc.drawBitmap(130, 168, health_full);
+        dc.drawBitmap(100, 162, half_border_self);
         
         
         // Call the parent onUpdate function to redraw the layout
-        //View.onUpdate(dc);
+       // View.onUpdate(dc);
     }
 
     // Called when this View is removed from the screen. Save the

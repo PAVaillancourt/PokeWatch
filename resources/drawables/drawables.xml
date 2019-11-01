@@ -3,4 +3,7 @@
     <bitmap id="LauncherIcon" filename="launcher_icon.png" />
     <bitmap id="charmander" filename="charmander.png" />
     <bitmap id="pikachu_behind" filename="pikachu_behind.png" />
+    <bitmap id="health_full" filename="health_full.png" />
+    <bitmap id="half_border_enemy" filename="half_border_enemy.png" />
+    <bitmap id="half_border_self" filename="half_border_self.png" />
 </drawables>
