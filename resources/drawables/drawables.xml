@@ -10,4 +10,9 @@
     <bitmap id="half_border_self" filename="half_border_self.png" />
     <bitmap id="box_ball" filename="box_ball.png" />
     <bitmap id="thunderbolts" filename="thunderbolts.png" />
+    <bitmap id="pokeball" filename="pokeball.png" />
+    <bitmap id="pokeball_opening" filename="pokeball_opening.png" />
+    <bitmap id="pokeball_opening_shadow" filename="pokeball_opening_shadow.png" />
+    <bitmap id="pokeball_opened" filename="pokeball_opened.png" />
+    <bitmap id="missingno" filename="missingno.png" />
 </drawables>
