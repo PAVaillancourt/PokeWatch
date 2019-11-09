@@ -12,6 +12,7 @@ using Toybox.System as Sys;
 using Toybox.Lang as Lang;
 using Toybox.Application as App;
 using Toybox.Timer as Timer;
+using Toybox.Math;
 
 // Note: dc := device context
 
@@ -29,6 +30,10 @@ class PokeWatchView extends Ui.WatchFace {
 	var frames_qty = 12;
 	var sceneIdx = 0;
 	var yOffset = 0;
+	var timerDelay = 500;
+	var flashesRemaining = 8;
+	var sceneRepeat1 = 0;
+	var sceneRepeat2 = 0;
 	
     // Layout variables
     var canvas_h = 0;
@@ -53,6 +58,7 @@ class PokeWatchView extends Ui.WatchFace {
     var half_border_self = null;
     var pokeball = null;
     var pokeball_opening_shadow = null;
+    var health_remaining = 1;
     
     // Text box
     var box_ball_left = null;
@@ -137,23 +143,8 @@ class PokeWatchView extends Ui.WatchFace {
     }
 
     // Update the view
-    function onUpdate(dc) {
-    	
-    	// Get time and date
-    	var clockTime = Sys.getClockTime();
-    	hour = clockTime.hour;
-	    minute = clockTime.min;
-		// 12-hour support
-		if (hour > 12 || hour == 0) {
-		    if (!deviceSettings.is24Hour) {
-		        if (hour == 0) {
-		            hour = 12;
-		        } else {
-		            hour = hour - 12;
-		        }
-		    }
-		}
-	    
+    function onUpdate(dc) {	
+  
 	    // step progress
       	var thisActivity = ActivityMonitor.getInfo();
 		steps = thisActivity.steps;
@@ -183,36 +174,61 @@ class PokeWatchView extends Ui.WatchFace {
 
         // Draw "constant" components
         // Get and show the current time
-        var timeString = Lang.format("$1$:$2$", [hour, minute.format("%02d")]);
-        dc.drawText(canvas_w/2, 20, poke_time, timeString, Gfx.TEXT_JUSTIFY_CENTER);
-        
+		drawTime(dc);        
         drawSelf(pikachu, dc);
         drawInfoBox(box_x_pos, box_y_pos, dc);
+        
+        if (!is_animating) {
+        	drawPokeBall(opponent,dc);
+        	return;
+        }
             
         // Animate
         switch (sceneIdx) {
         	case(0):
+        		// Waiting screen
+        		sceneRepeat2 = 3;
         		drawPokeBall(opponent, dc);
         		break;
         	case(1):
-        		//drawOpponent(opponent, dc);
-        		drawOpeningPokeBall(opponent, dc);
+        		// A wild pokemon appears!
+        		sceneRepeat1 = 3;
+        		drawOpponent(opponent, dc);
         		writeOpponentAppears(opponent, canvas_w, box_y_pos, dc);
+        		if (sceneRepeat2 > 0 ) {
+	        		sceneRepeat2--;
+	        		sceneIdx--;
+        		}
         		break;
         	case(2):
-        		drawOpponent(opponent, dc);
-        		break;
+        		// Opponent visible
+        		sceneRepeat2 = 3;
+    			drawOpponent(opponent, dc);
+        		if (sceneRepeat1 > 0) {
+        			sceneRepeat1--;
+        			sceneIdx--;
+        		}
+    			break;
         	case(3):
+        		// Pikachu uses thunder!
         		drawOpponent(opponent, dc);
         		writeThunder(canvas_w, box_y_pos, dc);
+        		if (sceneRepeat2 > 0) {
+	        		sceneRepeat2--;
+	        		sceneIdx--;
+        		}
         		break;
         	case(4):
+        		// Thunderbolts visible
+        		drawOpponent(opponent, dc);
         		drawThunderBolts(opponent, dc, thunderbolts);
         		writeThunder(canvas_w, box_y_pos, dc);
         		break;
         	case(5):
+        		// Thunderbolts visible, black bckgrnd
         		dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
         		dc.clear();
+        		drawTime(dc);
         		drawSelf(pikachu, dc);
         		drawInfoBox(box_x_pos, box_y_pos, dc);
         		drawOpponent(opponent, dc);
@@ -220,29 +236,66 @@ class PokeWatchView extends Ui.WatchFace {
         		drawThunderBolts(opponent, dc, thunderbolts);
         		break;
         	case(6):
+        		// Thunderbolts visible
         		drawOpponent(opponent, dc);
         		writeThunder(canvas_w, box_y_pos, dc);
         		drawThunderBolts(opponent, dc, thunderbolts);
         		break;
+        	//case(7):
+        		//// Opponent flashes
+        		//timerDelay = 200;
+				//if (flashesRemaining > 0) {
+				//	flashesRemaining--;
+				//	if (flashesRemaining % 2 == 0) {
+        		//		dc.clear();
+		        //		drawSelf(pikachu, dc);
+		        //		drawInfoBox(box_x_pos, box_y_pos, dc);
+		        //		drawOpponent(opponent, dc);
+				//	} else {
+        		//		dc.clear();
+		        //		drawSelf(pikachu, dc);
+		        //		drawInfoBox(box_x_pos, box_y_pos, dc);
+				//	}
+				//}
+				//break;    		
         	case(7):
-        		// Lower health bar
         	case(8):
+        		// Opponent loses health and flashes
+    			drawOpponent(opponent, dc);
+        		if (health_remaining > 0.1) { // 0.0000000 ...
+        			sceneIdx--;
+        			health_remaining -= 0.25;
+        			lowerOpponentHealth(health_remaining, dc);
+        		}
+        		break;
+        	case(9):
+        		// Opponent faints (slides down)
+        		timerDelay = 500;
         		if (yOffset < 100) {
         			sceneIdx--;
-        			yOffset += 10;
+        			yOffset += 20;
         			dc.clear();
         			drawOpponent(opponent, dc);
-        			//dc.fillRectangle(
+        			lowerOpponentHealth(health_remaining, dc);
+        			dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_WHITE);
+        			dc.fillRectangle(opponent.getPosX(), opponent.getPosY()+opponent.getBmpHeight()+20, 70, 80);
+        			dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
         			drawSelf(pikachu, dc);
         			drawInfoBox(box_x_pos, box_y_pos, dc);
         		}
         		break;
-        	case(9):
-        		yOffset = 0;
-        		writeFainted(opponent, canvas_w, box_y_pos, dc);
         	case(10):
+        		// Opponent fainted!
+        		timerDelay = 500;
+        		yOffset = 0;
+        		health_remaining = 1;
+        		//flashesRemaining = 8;
+        		writeFainted(opponent, canvas_w, box_y_pos, dc);
+        		break;
         	case(11):
-        	case(12):
+        		// Victory!
+        		writeVictory(dc);
+        		is_animating = false;
         	
         	default:
         		sceneIdx = -1;
@@ -265,16 +318,23 @@ class PokeWatchView extends Ui.WatchFace {
     function timerCallback() {
     	// Redraw the canvas
     	Ui.requestUpdate();
+    	// Update timer delay to adjsut animation speed
+    	TIMER_1.stop();
+    	TIMER_1.start(method(:timerCallback), timerDelay, false);
     }
 
     // The user has just looked at their watch. Timers and animations may be started here.
     function onExitSleep() {
+    	sceneIdx = 0;
+    	is_animating = true;
 	   	TIMER_1 = new Timer.Timer();
-    	TIMER_1.start(method(:timerCallback), 1000, true);
+    	TIMER_1.start(method(:timerCallback), timerDelay, false);
     }
 
     // Terminate any active timers and prepare for slow updates.
     function onEnterSleep() {
+    	sceneIdx = 0;
+    	is_animating = false;
     	Ui.requestUpdate();
     	
     	// Kill active timer
@@ -283,12 +343,26 @@ class PokeWatchView extends Ui.WatchFace {
 		}
     }
     
-    function drawBattle(dc) {
-    	
-    	var step = ani_step%12;
-      	var step_half = ani_step%6;
+    function drawTime(dc) {
+    	// Get time and date
+    	var clockTime = Sys.getClockTime();
+    	hour = clockTime.hour;
+	    minute = clockTime.min;
+		// 12-hour support
+		if (hour > 12 || hour == 0) {
+		    if (!deviceSettings.is24Hour) {
+		        if (hour == 0) {
+		            hour = 12;
+		        } else {
+		            hour = hour - 12;
+		        }
+		    }
+		}
+		
+		var timeString = Lang.format("$1$:$2$", [hour, minute.format("%02d")]);
+        dc.drawText(canvas_w/2, 20, poke_time, timeString, Gfx.TEXT_JUSTIFY_CENTER);
     }
-    
+
     function writeOpponentAppears(opponent, canvas_w, box_y_pos, dc) {
     	dc.drawText(canvas_w/2, box_y_pos + 12, poke_text_small, "A wild " + opponent.getName(), Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(canvas_w/2, box_y_pos + 25, poke_text_small, "appeared!", Gfx.TEXT_JUSTIFY_CENTER);
@@ -302,6 +376,10 @@ class PokeWatchView extends Ui.WatchFace {
     function writeFainted(opponent, canvas_w, box_y_pos, dc) {
         dc.drawText(canvas_w/2, box_y_pos + 12, poke_text_small, "Enemy " + opponent.getName(), Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(canvas_w/2, box_y_pos + 25, poke_text_small, "fainted!", Gfx.TEXT_JUSTIFY_CENTER);
+    }
+    
+    function writeVictory(dc) {
+    	dc.drawText(canvas_w/2, box_y_pos + 12, poke_text_small, "Victory!", Gfx.TEXT_JUSTIFY_CENTER);
     }
     
     function drawPokeBall(opponent, dc) {
@@ -330,10 +408,9 @@ class PokeWatchView extends Ui.WatchFace {
         //! TODO split ":L" and "[pokemon_lvl]" in two string, one smaller and bold, the other one normal
         dc.drawText(opponent_name_pos[0]+28, opponent_name_pos[1]+15, poke_text_small, opponent.getLvl(), Gfx.TEXT_JUSTIFY_LEFT);
 		dc.drawText(opponent_name_pos[0]+3, opponent_name_pos[1]+30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawBitmap(opponent_name_pos[0]+23, opponent_name_pos[1]+25, health_full);
+        dc.drawBitmap(opponent_name_pos[0]+27, opponent_name_pos[1]+32, health_full);
         dc.drawBitmap(opponent_name_pos[0]-12, opponent_name_pos[1]+15, half_border_enemy);
-		dc.drawBitmap(opponent.getPosX(), opponent.getPosY() + yOffset, opponent.getBitmap());
-		//opponent.draw(dc);
+		dc.drawBitmap(opponent_pos[0], opponent_pos[1] + yOffset, opponent.getBitmap());
     }
 
     function drawSelf(pikachu, dc) {
@@ -342,7 +419,7 @@ class PokeWatchView extends Ui.WatchFace {
         dc.drawText(self_name_pos[0], self_name_pos[1], poke_text_medium, pikachu.getName(), Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawText(self_name_pos[0] + 50, self_name_pos[1] + 15, poke_text_small, pikachu.getLvl(), Gfx.TEXT_JUSTIFY_LEFT);
 		dc.drawText(self_name_pos[0], self_name_pos[1] + 30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawBitmap(self_name_pos[0] + 20, self_name_pos[1] + 25, health_full);
+        dc.drawBitmap(self_name_pos[0] + 25, self_name_pos[1] + 32, health_full);
         dc.drawBitmap(self_name_pos[0] - 10, self_name_pos[1] + 20, half_border_self);
         dc.drawBitmap(self_pos[0], self_pos[1], pikachu.getBitmap());
     }
@@ -356,13 +433,26 @@ class PokeWatchView extends Ui.WatchFace {
 		dc.drawArc(canvas_w/2, canvas_h/2, canvas_w/2 - 6, Gfx.ARC_COUNTER_CLOCKWISE, 225, 315); 
         dc.drawLine(box_x_pos + box_ball_left.getWidth()-1, box_y_pos + box_ball_left.getHeight()/2-2,
         			 canvas_w - box_x_pos - box_ball_right.getWidth()+1, box_y_pos + box_ball_right.getHeight()/2-2);
-        dc.drawBitmap(box_x_pos, box_y_pos,box_ball_left);
+        dc.drawBitmap(box_x_pos, box_y_pos, box_ball_left);
         dc.drawBitmap(canvas_w - box_x_pos - box_ball_right.getWidth(), box_y_pos, box_ball_right);
     }
     
-    
-    //function lowerOpponentHealth() {    }
-    
+    function lowerOpponentHealth(health_remaining, dc) {
+        var opponent_name_pos = [17, canvas_h/4 + 5];
+        var health_bar_width = health_full.getWidth() - 6; // Width of green part
+        var hbw_adjusted = health_bar_width * health_remaining;
+        // Adjusting for rounding
+        if (health_remaining <= 0.1) {
+        	hbw_adjusted = -3;
+    	}
+        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_WHITE);
+    	dc.fillRectangle(
+    		opponent_name_pos[0] + 32 + hbw_adjusted,
+    		opponent_name_pos[1] + 34,
+    		Math.round(health_bar_width - hbw_adjusted),
+    		2
+    		);
+    }
     
     	class pokemon {
 		private var bitmap = null;
@@ -372,12 +462,16 @@ class PokeWatchView extends Ui.WatchFace {
 		private var attack = null;
 		private var posX = null;
 		private var posY = null;
+		private var offsetY = null;
+		private var offsetX = null;
 		
 		function initialize(name, lvl, posX, posY) {
 			self.name = name;
 			self.lvl = lvl;
 			self.posX= posX;
 			self.posY = posY;
+			self.offsetX = 0;
+			self.offsetY = 0;
 		}
 		
 		function hashCode() {
@@ -412,8 +506,24 @@ class PokeWatchView extends Ui.WatchFace {
 			self.posY = posY;
 		}
 		
+		function setOffsetY(offsetY) {
+			self.offsetY = offsetY;
+		}
+
+		function setOffsetX(offsetX) {
+			self.offsetX = offsetX;
+		}
+		
 		function setBitmapBW(bitmapBW) {
 			self.bitmapBW = bitmapBW;
+		}
+		
+		function getOffsetX() {
+			return self.offsetX;
+		}
+
+		function getOffsetY() {
+			return self.offsetY;
 		}
 		
 		function getPosXY() {
@@ -454,6 +564,16 @@ class PokeWatchView extends Ui.WatchFace {
 		
 		function getAttack() {
 			return self.attack;
+		}
+		
+		// TODO
+		function fadeDown(offsetY) {
+			return self.offsetY;
+		}
+		
+		// TODO
+		function fadeIn(offsetX) {
+			return self.offsetX;
 		}
 	}
 }
