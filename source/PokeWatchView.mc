@@ -21,8 +21,6 @@ class PokeWatchView extends Ui.WatchFace {
 
 	// Globals
 	var TIMER_1;
-	var TIMER_TIMEOUT = 1000;
-	var TIMER_STEPS = TIMER_TIMEOUT;
 	
 	// Animation
 	var ani_step = null;
@@ -42,10 +40,11 @@ class PokeWatchView extends Ui.WatchFace {
     
     // Opponents
     var charmander = new pokemon("CHARMANDER",":L9",150,50);
-    var squirtle = new pokemon("SQUIRTLE",":L10",160,60);
-    var bulbasaur = new pokemon("BULBASAUR",":L15",160,70);
+    var squirtle = new pokemon("SQUIRTLE",":L23",160,60);
+    var bulbasaur = new pokemon("BULBASAUR",":L46",160,70);
     var missingno = new pokemon("MISSINGNO",":L99",160,70);
     var opponent = null;
+    var opponentList = null;
     
     // Pikachu
     var thunderbolts = null;
@@ -67,7 +66,6 @@ class PokeWatchView extends Ui.WatchFace {
     var box_x_pos = 30;
 
     // Fonts
-    //! TODO reduce font size (with BMFont)
     var poke_time = null;
     var poke_text_medium = null;
     var poke_text_small = null;
@@ -85,17 +83,10 @@ class PokeWatchView extends Ui.WatchFace {
     var distance = 0;
     
     // System
-    var has1hz = false;
     var deviceSettings = null;
-    var is_metric = true;
-    
     
     function initialize() {
 		WatchFace.initialize();
-		
-		if( Toybox.WatchUi.WatchFace has :onPartialUpdate ) {
-       		has1hz = true;
-     	}
     }
 
     // Load your resources here
@@ -130,6 +121,7 @@ class PokeWatchView extends Ui.WatchFace {
         squirtle.setBitmap(Ui.loadResource(Rez.Drawables.squirtle));
         bulbasaur.setBitmap(Ui.loadResource(Rez.Drawables.bulbasaur));
         missingno.setBitmap(Ui.loadResource(Rez.Drawables.missingno)); 
+        opponentList = [charmander, bulbasaur, squirtle, missingno];
         
         // Animations
         thunderbolts = Ui.loadResource(Rez.Drawables.thunderbolts);
@@ -144,28 +136,6 @@ class PokeWatchView extends Ui.WatchFace {
 
     // Update the view
     function onUpdate(dc) {	
-  
-	    // step progress
-      	var thisActivity = ActivityMonitor.getInfo();
-		steps = thisActivity.steps;
-		goal = thisActivity.stepGoal;
-		// define our current step progress in terms of % completed
-		stepProgress = (100*(steps.toFloat()/goal.toFloat())).toNumber();
-		var cm_distance = thisActivity.distance;
-		
-		if (deviceSettings.distanceUnits == Sys.UNIT_METRIC) {
-		    distance = (cm_distance).toFloat() / 100000;
-		    is_metric = true;
-		} else {
-		    distance = (cm_distance).toFloat() / 160934;
-		    is_metric = false;
-		}
-		
-		//! TODO
-		// Select opponent randomly, more steps means more chances of a higher level opponent
-		if (sceneIdx == 0) {
-			opponent = charmander;
-		}		
     	
     	// Clear canvas
     	dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_WHITE);
@@ -178,21 +148,31 @@ class PokeWatchView extends Ui.WatchFace {
         drawSelf(pikachu, dc);
         drawInfoBox(box_x_pos, box_y_pos, dc);
         
+		// Select opponent according to step progress
+		if (sceneIdx == 0) {
+			opponent = selectOpponent(opponentList);
+		}		
+
+        // No animation in low power mode
         if (!is_animating) {
-        	drawPokeBall(opponent,dc);
+        	drawPokeBall(opponent, dc);
         	return;
         }
-            
+
+		// Start animation sequence
+        // System updates every second via requestUpdate, notwithstanding timers
         // Animate
         switch (sceneIdx) {
         	case(0):
         		// Waiting screen
+        		//System.println("Case 0");
         		sceneRepeat2 = 3;
         		drawPokeBall(opponent, dc);
         		break;
         	case(1):
         		// A wild pokemon appears!
-        		sceneRepeat1 = 3;
+        		//System.println("Case 1");
+        		sceneRepeat1 = 2;
         		drawOpponent(opponent, dc);
         		writeOpponentAppears(opponent, canvas_w, box_y_pos, dc);
         		if (sceneRepeat2 > 0 ) {
@@ -202,6 +182,7 @@ class PokeWatchView extends Ui.WatchFace {
         		break;
         	case(2):
         		// Opponent visible
+        		//System.println("Case 2");
         		sceneRepeat2 = 3;
     			drawOpponent(opponent, dc);
         		if (sceneRepeat1 > 0) {
@@ -211,6 +192,7 @@ class PokeWatchView extends Ui.WatchFace {
     			break;
         	case(3):
         		// Pikachu uses thunder!
+        		//System.println("Case 3");
         		drawOpponent(opponent, dc);
         		writeThunder(canvas_w, box_y_pos, dc);
         		if (sceneRepeat2 > 0) {
@@ -220,12 +202,14 @@ class PokeWatchView extends Ui.WatchFace {
         		break;
         	case(4):
         		// Thunderbolts visible
+        		//System.println("Case 4");
         		drawOpponent(opponent, dc);
         		drawThunderBolts(opponent, dc, thunderbolts);
         		writeThunder(canvas_w, box_y_pos, dc);
         		break;
         	case(5):
         		// Thunderbolts visible, black bckgrnd
+        		//System.println("Case 5");
         		dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_BLACK);
         		dc.clear();
         		drawTime(dc);
@@ -237,32 +221,17 @@ class PokeWatchView extends Ui.WatchFace {
         		break;
         	case(6):
         		// Thunderbolts visible
+        		//System.println("Case 6");
         		drawOpponent(opponent, dc);
         		writeThunder(canvas_w, box_y_pos, dc);
         		drawThunderBolts(opponent, dc, thunderbolts);
-        		break;
-        	//case(7):
-        		//// Opponent flashes
-        		//timerDelay = 200;
-				//if (flashesRemaining > 0) {
-				//	flashesRemaining--;
-				//	if (flashesRemaining % 2 == 0) {
-        		//		dc.clear();
-		        //		drawSelf(pikachu, dc);
-		        //		drawInfoBox(box_x_pos, box_y_pos, dc);
-		        //		drawOpponent(opponent, dc);
-				//	} else {
-        		//		dc.clear();
-		        //		drawSelf(pikachu, dc);
-		        //		drawInfoBox(box_x_pos, box_y_pos, dc);
-				//	}
-				//}
-				//break;    		
+        		break;   		
         	case(7):
         	case(8):
-        		// Opponent loses health and flashes
+        		// Opponent loses health
+        		//System.println("Case 8");
     			drawOpponent(opponent, dc);
-        		if (health_remaining > 0.1) { // 0.0000000 ...
+        		if (health_remaining > 0.1) { // Can<t be 0 since 0.0000000 != 0 ...
         			sceneIdx--;
         			health_remaining -= 0.25;
         			lowerOpponentHealth(health_remaining, dc);
@@ -270,11 +239,11 @@ class PokeWatchView extends Ui.WatchFace {
         		break;
         	case(9):
         		// Opponent faints (slides down)
-        		timerDelay = 500;
+        		//System.println("Case 9");
         		if (yOffset < 100) {
         			sceneIdx--;
         			yOffset += 20;
-        			dc.clear();
+        			//dc.clear();
         			drawOpponent(opponent, dc);
         			lowerOpponentHealth(health_remaining, dc);
         			dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_WHITE);
@@ -283,25 +252,38 @@ class PokeWatchView extends Ui.WatchFace {
         			drawSelf(pikachu, dc);
         			drawInfoBox(box_x_pos, box_y_pos, dc);
         		}
+        		sceneRepeat2 = 3;
+        		sceneRepeat1 = 3;
         		break;
         	case(10):
         		// Opponent fainted!
-        		timerDelay = 500;
+        		//System.println("Case 10");
         		yOffset = 0;
         		health_remaining = 1;
-        		//flashesRemaining = 8;
-        		writeFainted(opponent, canvas_w, box_y_pos, dc);
+        		if (sceneRepeat2 > 0) {
+        			sceneRepeat2--;
+        			sceneIdx--;
+	        		writeFainted(opponent, canvas_w, box_y_pos, dc);
+        		}
         		break;
         	case(11):
         		// Victory!
-        		writeVictory(dc);
+        		//System.println("Case 11");
+        		if (sceneRepeat1 > 0) {
+        			sceneRepeat1--;
+        			sceneIdx--;
+	        		writeVictory(dc);
+	        		break;
+        		}
         		is_animating = false;
-        	
+        		break;
         	default:
+        		//System.println("Case Default");
         		sceneIdx = -1;
         		break;	
         }
       
+      	//System.println("End");
         sceneIdx++;
     	if (sceneIdx >= frames_qty) {
 			sceneIdx = frames_qty -1;
@@ -318,8 +300,14 @@ class PokeWatchView extends Ui.WatchFace {
     function timerCallback() {
     	// Redraw the canvas
     	Ui.requestUpdate();
-    	// Update timer delay to adjsut animation speed
+    	
+    	/**
+    	Since the system updates the screen every second, to keep some scenes 
+    	longer, we have to use a sceneRepeat variable. On the contrary, for scenes
+    	that have to repeat in a short interval, we use the timer.
+    	*/
     	TIMER_1.stop();
+    	TIMER_1 = new Timer.Timer();
     	TIMER_1.start(method(:timerCallback), timerDelay, false);
     }
 
@@ -327,6 +315,7 @@ class PokeWatchView extends Ui.WatchFace {
     function onExitSleep() {
     	sceneIdx = 0;
     	is_animating = true;
+    	timerDelay = 500;
 	   	TIMER_1 = new Timer.Timer();
     	TIMER_1.start(method(:timerCallback), timerDelay, false);
     }
@@ -335,6 +324,7 @@ class PokeWatchView extends Ui.WatchFace {
     function onEnterSleep() {
     	sceneIdx = 0;
     	is_animating = false;
+    	timerDelay = 1000;
     	Ui.requestUpdate();
     	
     	// Kill active timer
@@ -454,7 +444,19 @@ class PokeWatchView extends Ui.WatchFace {
     		);
     }
     
-    	class pokemon {
+    function selectOpponent(opponentList) {
+    	// step progress
+      	var thisActivity = ActivityMonitor.getInfo();
+		steps = 7500;//thisActivity.steps;
+		goal = thisActivity.stepGoal;
+		// define our current step progress
+		stepProgress = ((steps.toFloat()/goal.toFloat())*4).toNumber();
+		stepProgress = (stepProgress) >= 4 ? 3 : stepProgress;
+		
+		return opponentList[stepProgress];
+    }
+    
+	class pokemon {
 		private var bitmap = null;
 		private var bitmapBW = null;
 		private var name = null;

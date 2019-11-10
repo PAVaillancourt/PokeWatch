@@ -13,7 +13,7 @@
     <bitmap id="thunderbolts" filename="thunderbolts.png" />
     <bitmap id="pokeball" filename="pokeball.png" />
     <bitmap id="pokeball_opening" filename="pokeball_opening.png" />
-    <bitmap id="pokeball_opening_shadow" filename="pokeball_opening_shadow_small.png" />
+    <bitmap id="pokeball_opening_shadow" filename="pokeball_opening.png" />
     <bitmap id="pokeball_opened" filename="pokeball_opened.png" />
     <bitmap id="missingno" filename="missingno.png" />
 </drawables>
