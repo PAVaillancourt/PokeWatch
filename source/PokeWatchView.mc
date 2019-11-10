@@ -159,36 +159,43 @@ class PokeWatchView extends Ui.WatchFace {
         	return;
         }
 
+        /**
+    	Since the system updates the screen every second, to keep some scenes 
+    	longer, we have to use sceneRepeat variables.
+    	*/
 		// Start animation sequence
-        // System updates every second via requestUpdate, notwithstanding timers
         // Animate
         switch (sceneIdx) {
         	case(0):
         		// Waiting screen
         		//System.println("Case 0");
-        		sceneRepeat2 = 3;
         		drawPokeBall(opponent, dc);
+        		// Prepare case 1
+        		sceneRepeat2 = 2;
         		break;
         	case(1):
         		// A wild pokemon appears!
         		//System.println("Case 1");
-        		sceneRepeat1 = 2;
         		drawOpponent(opponent, dc);
+        		drawOpeningPokeBall(opponent, dc);
         		writeOpponentAppears(opponent, canvas_w, box_y_pos, dc);
         		if (sceneRepeat2 > 0 ) {
 	        		sceneRepeat2--;
 	        		sceneIdx--;
         		}
+				// Prepare case 2
+        		sceneRepeat1 = 2;
         		break;
         	case(2):
         		// Opponent visible
         		//System.println("Case 2");
-        		sceneRepeat2 = 3;
     			drawOpponent(opponent, dc);
         		if (sceneRepeat1 > 0) {
         			sceneRepeat1--;
         			sceneIdx--;
         		}
+				// Prepare case 3
+        		sceneRepeat2 = 3;
     			break;
         	case(3):
         		// Pikachu uses thunder!
@@ -241,17 +248,18 @@ class PokeWatchView extends Ui.WatchFace {
         		// Opponent faints (slides down)
         		//System.println("Case 9");
         		if (yOffset < 100) {
-        			sceneIdx--;
-        			yOffset += 20;
-        			//dc.clear();
         			drawOpponent(opponent, dc);
         			lowerOpponentHealth(health_remaining, dc);
+        			yOffset += 20;
+        			//dc.clear();
         			dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_WHITE);
         			dc.fillRectangle(opponent.getPosX(), opponent.getPosY()+opponent.getBmpHeight()+20, 70, 80);
         			dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
         			drawSelf(pikachu, dc);
         			drawInfoBox(box_x_pos, box_y_pos, dc);
+        			sceneIdx--;
         		}
+        		// Prepare cases 10 and 11
         		sceneRepeat2 = 3;
         		sceneRepeat1 = 3;
         		break;
@@ -300,12 +308,7 @@ class PokeWatchView extends Ui.WatchFace {
     function timerCallback() {
     	// Redraw the canvas
     	Ui.requestUpdate();
-    	
-    	/**
-    	Since the system updates the screen every second, to keep some scenes 
-    	longer, we have to use a sceneRepeat variable. On the contrary, for scenes
-    	that have to repeat in a short interval, we use the timer.
-    	*/
+    
     	TIMER_1.stop();
     	TIMER_1 = new Timer.Timer();
     	TIMER_1.start(method(:timerCallback), timerDelay, false);
@@ -373,11 +376,11 @@ class PokeWatchView extends Ui.WatchFace {
     }
     
     function drawPokeBall(opponent, dc) {
-    	dc.drawBitmap(opponent.getPosX(), opponent.getPosY()+30, pokeball);
+    	dc.drawBitmap(opponent.getPosX(), opponent.getPosY()+40, pokeball);
     }
     
     function drawOpeningPokeBall(opponent, dc) {
-    	dc.drawBitmap(opponent.getPosX()-4, opponent.getPosY(), pokeball_opening_shadow);
+    	dc.drawBitmap(opponent.getPosX(), opponent.getPosY()+35, pokeball_opening_shadow);
     }
     
     function drawThunderBolts(opponent, dc, thunderbolts) {
@@ -447,12 +450,13 @@ class PokeWatchView extends Ui.WatchFace {
     function selectOpponent(opponentList) {
     	// step progress
       	var thisActivity = ActivityMonitor.getInfo();
-		steps = 7500;//thisActivity.steps;
+		steps = thisActivity.steps;
 		goal = thisActivity.stepGoal;
 		// define our current step progress
 		stepProgress = ((steps.toFloat()/goal.toFloat())*4).toNumber();
-		stepProgress = (stepProgress) >= 4 ? 3 : stepProgress;
-		
+		System.println(stepProgress);
+		stepProgress = (stepProgress) >= 4 ? 3 : stepProgress % 4;
+		System.println(stepProgress);
 		return opponentList[stepProgress];
     }
     
