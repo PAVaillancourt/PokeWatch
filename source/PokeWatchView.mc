@@ -14,15 +14,10 @@ using Toybox.Application as App;
 using Toybox.Timer as Timer;
 using Toybox.Math;
 
-// Note: dc := device context
-
 class PokeWatchView extends Ui.WatchFace {
-
-
-	// Globals
-	var TIMER_1;
 	
 	// Animation
+	var TIMER_1;
 	var ani_step = null;
 	var is_animating = false;
 	var frames_qty = 12;
@@ -39,10 +34,14 @@ class PokeWatchView extends Ui.WatchFace {
     var centerpoint = [0,0];
     
     // Opponents
-    var charmander = new pokemon("CHARMANDER",":L9",150,50);
-    var squirtle = new pokemon("SQUIRTLE",":L23",160,60);
-    var bulbasaur = new pokemon("BULBASAUR",":L46",160,70);
-    var missingno = new pokemon("MISSINGNO",":L99",160,70);
+    var charmander = new pokemon("Charmander",":L4",180,75);
+    var squirtle = new pokemon("Squirtle",":L8",170,75);
+    var bulbasaur = new pokemon("Bulbasaur",":L15",170,70);
+    var ivysaur = new pokemon("Ivysaur",":L16",160,70);
+    var wartortle = new pokemon("Wartortle",":L23",160,70);
+    var charizard = new pokemon("Charizard",":L42",160,70);
+    var blastoise = new pokemon("Blastoise",":L69",160,70);
+    var missingno = new pokemon("Missigno",":L99",160,70);
     var opponent = null;
     var opponentList = null;
     
@@ -56,7 +55,7 @@ class PokeWatchView extends Ui.WatchFace {
     var half_border_enemy = null;
     var half_border_self = null;
     var pokeball = null;
-    var pokeball_opening_shadow = null;
+    var pokeball_opening = null;
     var health_remaining = 1;
     
     // Text box
@@ -81,6 +80,7 @@ class PokeWatchView extends Ui.WatchFace {
     var steps = 0;
     var stepProgress = 0;
     var distance = 0;
+    var pokemonPos = null;
     
     // System
     var deviceSettings = null;
@@ -120,12 +120,16 @@ class PokeWatchView extends Ui.WatchFace {
         charmander.setBitmap(Ui.loadResource(Rez.Drawables.charmander));       
         squirtle.setBitmap(Ui.loadResource(Rez.Drawables.squirtle));
         bulbasaur.setBitmap(Ui.loadResource(Rez.Drawables.bulbasaur));
+        ivysaur.setBitmap(Ui.loadResource(Rez.Drawables.ivysaur));
+        wartortle.setBitmap(Ui.loadResource(Rez.Drawables.wartortle));
+        charizard.setBitmap(Ui.loadResource(Rez.Drawables.charizard));
+        blastoise.setBitmap(Ui.loadResource(Rez.Drawables.blastoise));
         missingno.setBitmap(Ui.loadResource(Rez.Drawables.missingno)); 
-        opponentList = [charmander, bulbasaur, squirtle, missingno];
+        opponentList = [[charmander, bulbasaur, squirtle], [ivysaur, wartortle], [charizard, blastoise], [missingno]];
         
         // Animations
         thunderbolts = Ui.loadResource(Rez.Drawables.thunderbolts);
-        pokeball_opening_shadow = Ui.loadResource(Rez.Drawables.pokeball_opening_shadow);
+        pokeball_opening = Ui.loadResource(Rez.Drawables.pokeball_opening);
     }
 
     // Called when this View is brought to the foreground. Restore
@@ -143,7 +147,6 @@ class PokeWatchView extends Ui.WatchFace {
         dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
 
         // Draw "constant" components
-        // Get and show the current time
 		drawTime(dc);        
         drawSelf(pikachu, dc);
         drawInfoBox(box_x_pos, box_y_pos, dc);
@@ -234,7 +237,6 @@ class PokeWatchView extends Ui.WatchFace {
         		drawThunderBolts(opponent, dc, thunderbolts);
         		break;   		
         	case(7):
-        	case(8):
         		// Opponent loses health
         		//System.println("Case 8");
     			drawOpponent(opponent, dc);
@@ -244,16 +246,16 @@ class PokeWatchView extends Ui.WatchFace {
         			lowerOpponentHealth(health_remaining, dc);
         		}
         		break;
-        	case(9):
+        	case(8):
         		// Opponent faints (slides down)
         		//System.println("Case 9");
         		if (yOffset < 100) {
-        			drawOpponent(opponent, dc);
-        			lowerOpponentHealth(health_remaining, dc);
+	    			drawOpponent(opponent, dc);
+	    			lowerOpponentHealth(health_remaining, dc);
         			yOffset += 20;
         			//dc.clear();
         			dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_WHITE);
-        			dc.fillRectangle(opponent.getPosX(), opponent.getPosY()+opponent.getBmpHeight()+20, 70, 80);
+        			dc.fillRectangle(opponent.getPosX(), opponent.getPosY()+opponent.getBmpHeight()+10, 70, 80);
         			dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
         			drawSelf(pikachu, dc);
         			drawInfoBox(box_x_pos, box_y_pos, dc);
@@ -263,7 +265,7 @@ class PokeWatchView extends Ui.WatchFace {
         		sceneRepeat2 = 3;
         		sceneRepeat1 = 3;
         		break;
-        	case(10):
+        	case(9):
         		// Opponent fainted!
         		//System.println("Case 10");
         		yOffset = 0;
@@ -274,7 +276,7 @@ class PokeWatchView extends Ui.WatchFace {
 	        		writeFainted(opponent, canvas_w, box_y_pos, dc);
         		}
         		break;
-        	case(11):
+        	case(10):
         		// Victory!
         		//System.println("Case 11");
         		if (sceneRepeat1 > 0) {
@@ -380,35 +382,40 @@ class PokeWatchView extends Ui.WatchFace {
     }
     
     function drawOpeningPokeBall(opponent, dc) {
-    	dc.drawBitmap(opponent.getPosX(), opponent.getPosY()+35, pokeball_opening_shadow);
+    	dc.drawBitmap(opponent.getPosX()+10, opponent.getPosY()+35, pokeball_opening);
     }
     
     function drawThunderBolts(opponent, dc, thunderbolts) {
-    	dc.drawBitmap(opponent.getPosX() - 25, opponent.getPosY() - 20, thunderbolts);
     	var centerX = opponent.getPosX() + opponent.getBmpWidth()/2;
     	var centerY = opponent.getPosY() +opponent.getBmpHeight()/2;
     	dc.setColor(Gfx.COLOR_YELLOW, Gfx.COLOR_WHITE);
-    	dc.fillCircle(centerX, centerY, opponent.getBmpWidth()/4);
+    	dc.fillCircle(centerX, centerY, opponent.getBmpWidth()/3.5);
     	dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
+    	var thunderW = thunderbolts.getWidth();
+    	var thunderH = thunderbolts.getHeight();
+    	dc.drawBitmap(centerX - thunderW/2, centerY - thunderH/2, thunderbolts);
     } 
     
-    function drawOpponent(opponent, dc) {
+    function drawOpponent(opponent, dc) { 
         var opponent_pos = opponent.getPosXY();
         var opponent_name_pos = [17, canvas_h/4 + 5];   
              
-        // Opponent 
-        dc.drawText(opponent_name_pos[0], opponent_name_pos[1], poke_text_medium, opponent.getName(), Gfx.TEXT_JUSTIFY_LEFT);
-        //! TODO split ":L" and "[pokemon_lvl]" in two string, one smaller and bold, the other one normal
+		dc.drawBitmap(opponent_pos[0], opponent_pos[1] + yOffset, opponent.getBitmap());
+        dc.drawText(opponent_name_pos[0], opponent_name_pos[1], poke_text_medium, opponent.getName().toUpper(), Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawText(opponent_name_pos[0]+28, opponent_name_pos[1]+15, poke_text_small, opponent.getLvl(), Gfx.TEXT_JUSTIFY_LEFT);
 		dc.drawText(opponent_name_pos[0]+3, opponent_name_pos[1]+30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawBitmap(opponent_name_pos[0]+27, opponent_name_pos[1]+32, health_full);
         dc.drawBitmap(opponent_name_pos[0]-12, opponent_name_pos[1]+15, half_border_enemy);
-		dc.drawBitmap(opponent_pos[0], opponent_pos[1] + yOffset, opponent.getBitmap());
+        dc.drawBitmap(opponent_name_pos[0]+27, opponent_name_pos[1]+32, health_full);
+        // Fixing a bug where health bar fills after being lowered
+        if (health_remaining < 0.1) {
+        	lowerOpponentHealth(health_remaining, dc);
+        }
     }
 
     function drawSelf(pikachu, dc) {
         var self_pos = pikachu.getPosXY();
         var self_name_pos = [canvas_w/2-15, canvas_h/2 + 20];
+        
         dc.drawText(self_name_pos[0], self_name_pos[1], poke_text_medium, pikachu.getName(), Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawText(self_name_pos[0] + 50, self_name_pos[1] + 15, poke_text_small, pikachu.getLvl(), Gfx.TEXT_JUSTIFY_LEFT);
 		dc.drawText(self_name_pos[0], self_name_pos[1] + 30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
@@ -430,6 +437,7 @@ class PokeWatchView extends Ui.WatchFace {
         dc.drawBitmap(canvas_w - box_x_pos - box_ball_right.getWidth(), box_y_pos, box_ball_right);
     }
     
+    // Draws an increasingly wide white rectangle over green part of health bar
     function lowerOpponentHealth(health_remaining, dc) {
         var opponent_name_pos = [17, canvas_h/4 + 5];
         var health_bar_width = health_full.getWidth() - 6; // Width of green part
@@ -447,17 +455,27 @@ class PokeWatchView extends Ui.WatchFace {
     		);
     }
     
+    // Picks an opponent first based on % of step goal, then randomly
     function selectOpponent(opponentList) {
     	// step progress
       	var thisActivity = ActivityMonitor.getInfo();
 		steps = thisActivity.steps;
 		goal = thisActivity.stepGoal;
 		// define our current step progress
-		stepProgress = ((steps.toFloat()/goal.toFloat())*4).toNumber();
-		System.println(stepProgress);
-		stepProgress = (stepProgress) >= 4 ? 3 : stepProgress % 4;
-		System.println(stepProgress);
-		return opponentList[stepProgress];
+		stepProgress = ((steps.toFloat()/goal.toFloat())*3).toNumber();
+		stepProgress = (stepProgress) >= 3 ? 3 : stepProgress % 3;
+		switch(stepProgress) {
+			case(0):
+				pokemonPos = Math.rand() % 3;
+				break;
+			case(1):
+			case(2):
+				pokemonPos = Math.rand() % 2;
+				break;
+			default:
+				pokemonPos = 0;
+		}
+		return opponentList[stepProgress][pokemonPos];
     }
     
 	class pokemon {
@@ -570,16 +588,6 @@ class PokeWatchView extends Ui.WatchFace {
 		
 		function getAttack() {
 			return self.attack;
-		}
-		
-		// TODO
-		function fadeDown(offsetY) {
-			return self.offsetY;
-		}
-		
-		// TODO
-		function fadeIn(offsetX) {
-			return self.offsetX;
 		}
 	}
 }

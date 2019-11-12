@@ -2,9 +2,12 @@
 	<!-- source: http://www.pokestadium.com/tools/sprites -->
     <bitmap id="LauncherIcon" filename="launcher_icon.png" />
     <bitmap id="charmander" filename="charmander.png" />
-    <bitmap id="charmander_bw" filename="charmander_bw.png"/>
-    <bitmap id="bulbasaur" filename="bulbasaur_raw.png" />
-    <bitmap id="squirtle" filename="squirtle_raw.png" />
+    <bitmap id="bulbasaur" filename="bulbasaur.png" />
+    <bitmap id="squirtle" filename="squirtle.png" />
+    <bitmap id="wartortle" filename="wartortle.png" />
+    <bitmap id="ivysaur" filename="ivysaur.png" />
+    <bitmap id="blastoise" filename="blastoise.png" />
+    <bitmap id="charizard" filename="charizard.png" />
     <bitmap id="pikachu_behind" filename="pikachu_behind.png" />
     <bitmap id="health_full" filename="health_full.png" />
     <bitmap id="half_border_enemy" filename="half_border_enemy.png" />
@@ -13,7 +16,5 @@
     <bitmap id="thunderbolts" filename="thunderbolts.png" />
     <bitmap id="pokeball" filename="pokeball.png" />
     <bitmap id="pokeball_opening" filename="pokeball_opening.png" />
-    <bitmap id="pokeball_opening_shadow" filename="pokeball_opened.png" />
-    <bitmap id="pokeball_opened" filename="pokeball_opened.png" />
     <bitmap id="missingno" filename="missingno.png" />
 </drawables>
