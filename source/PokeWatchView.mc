@@ -13,6 +13,7 @@ using Toybox.Lang as Lang;
 using Toybox.Application as App;
 using Toybox.Timer as Timer;
 using Toybox.Math;
+using Toybox.Attention;
 
 class PokeWatchView extends Ui.WatchFace {
 	
@@ -232,6 +233,7 @@ class PokeWatchView extends Ui.WatchFace {
         	case(6):
         		// Thunderbolts visible
         		//System.println("Case 6");
+        		Attention.backlight(true);
         		drawOpponent(opponent, dc);
         		writeThunder(canvas_w, box_y_pos, dc);
         		drawThunderBolts(opponent, dc, thunderbolts);
@@ -240,7 +242,7 @@ class PokeWatchView extends Ui.WatchFace {
         		// Opponent loses health
         		//System.println("Case 8");
     			drawOpponent(opponent, dc);
-        		if (health_remaining > 0.1) { // Can<t be 0 since 0.0000000 != 0 ...
+        		if (health_remaining > 0.1) { // Can't be 0 since 0.0000000 != 0 ...
         			sceneIdx--;
         			health_remaining -= 0.25;
         			lowerOpponentHealth(health_remaining, dc);
@@ -320,6 +322,7 @@ class PokeWatchView extends Ui.WatchFace {
     function onExitSleep() {
     	sceneIdx = 0;
     	is_animating = true;
+    	yOffset = 0;
     	timerDelay = 500;
 	   	TIMER_1 = new Timer.Timer();
     	TIMER_1.start(method(:timerCallback), timerDelay, false);
@@ -327,8 +330,10 @@ class PokeWatchView extends Ui.WatchFace {
 
     // Terminate any active timers and prepare for slow updates.
     function onEnterSleep() {
+		Attention.backlight(false);
     	sceneIdx = 0;
     	is_animating = false;
+    	yOffset = 0;
     	timerDelay = 1000;
     	Ui.requestUpdate();
     	
@@ -358,17 +363,17 @@ class PokeWatchView extends Ui.WatchFace {
         dc.drawText(canvas_w/2, 20, poke_time, timeString, Gfx.TEXT_JUSTIFY_CENTER);
     }
 
-    function writeOpponentAppears(opponent, canvas_w, box_y_pos, dc) {
+    function writeOpponentAppears(opponent, canvas_w, box_y_pos, dc) {  
     	dc.drawText(canvas_w/2, box_y_pos + 12, poke_text_small, "A wild " + opponent.getName(), Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(canvas_w/2, box_y_pos + 25, poke_text_small, "appeared!", Gfx.TEXT_JUSTIFY_CENTER);
     }
     
-    function writeThunder(canvas_w, box_y_pos, dc) {
+    function writeThunder(canvas_w, box_y_pos, dc) {  
     	dc.drawText(canvas_w/2, box_y_pos + 12, poke_text_small, "Pikachu used", Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(canvas_w/2, box_y_pos + 25, poke_text_small, "Thunder!", Gfx.TEXT_JUSTIFY_CENTER);
     }
     
-    function writeFainted(opponent, canvas_w, box_y_pos, dc) {
+    function writeFainted(opponent, canvas_w, box_y_pos, dc) {        
         dc.drawText(canvas_w/2, box_y_pos + 12, poke_text_small, "Enemy " + opponent.getName(), Gfx.TEXT_JUSTIFY_CENTER);
         dc.drawText(canvas_w/2, box_y_pos + 25, poke_text_small, "fainted!", Gfx.TEXT_JUSTIFY_CENTER);
     }
@@ -463,7 +468,11 @@ class PokeWatchView extends Ui.WatchFace {
 		goal = thisActivity.stepGoal;
 		// define our current step progress
 		stepProgress = ((steps.toFloat()/goal.toFloat())*3).toNumber();
-		stepProgress = (stepProgress) >= 3 ? 3 : stepProgress % 3;
+		if (stepProgress >= 6) {
+			stepProgress = 3;
+		} else {
+			stepProgress = (stepProgress) >= 2 ? 2 : stepProgress % 3;
+		} 
 		switch(stepProgress) {
 			case(0):
 				pokemonPos = Math.rand() % 3;
