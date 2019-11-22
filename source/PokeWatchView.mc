@@ -13,7 +13,6 @@ using Toybox.Lang as Lang;
 using Toybox.Application as App;
 using Toybox.Timer as Timer;
 using Toybox.Math;
-using Toybox.Attention;
 
 class PokeWatchView extends Ui.WatchFace {
 	
@@ -331,7 +330,6 @@ class PokeWatchView extends Ui.WatchFace {
 
     // Terminate any active timers and prepare for slow updates.
     function onEnterSleep() {
-		Attention.backlight(false);
     	sceneIdx = 0;
     	is_animating = false;
     	yOffset = 0;
