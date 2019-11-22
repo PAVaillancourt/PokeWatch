@@ -323,6 +323,7 @@ class PokeWatchView extends Ui.WatchFace {
     	sceneIdx = 0;
     	is_animating = true;
     	yOffset = 0;
+    	health_remaining = 1;
     	timerDelay = 500;
 	   	TIMER_1 = new Timer.Timer();
     	TIMER_1.start(method(:timerCallback), timerDelay, false);
@@ -334,6 +335,7 @@ class PokeWatchView extends Ui.WatchFace {
     	sceneIdx = 0;
     	is_animating = false;
     	yOffset = 0;
+    	health_remaining = 1;
     	timerDelay = 1000;
     	Ui.requestUpdate();
     	
