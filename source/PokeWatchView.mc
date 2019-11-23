@@ -3,6 +3,7 @@
  * (c) 2019
  */
 
+using Toybox.WatchUi;
 using Toybox.Time;
 using Toybox.Time.Gregorian;
 using Toybox.WatchUi as Ui;
@@ -12,12 +13,7 @@ using Toybox.Lang as Lang;
 using Toybox.Application as App;
 using Toybox.Timer as Timer;
 using Toybox.Math;
-
-enum {
-  SCREEN_SHAPE_CIRC = 0x000001,
-  SCREEN_SHAPE_SEMICIRC = 0x000002,
-  SCREEN_SHAPE_RECT = 0x000003
-}
+using Toybox.Attention;
 
 class PokeWatchView extends Ui.WatchFace {
 	
@@ -34,15 +30,8 @@ class PokeWatchView extends Ui.WatchFace {
 	var sceneRepeat2 = 0;
 	
     // Layout variables
-    var vert_layout = false;
     var canvas_h = 0;
     var canvas_w = 0;
-    var canvas_shape = 0;
-    var canvas_rect = false;
-    var canvas_circ = false;
-    var canvas_semicirc = false;
-    var canvas_tall = false;
-    var canvas_r240 = false;
     var centerpoint = [0,0];
     
     // Opponents
@@ -105,64 +94,10 @@ class PokeWatchView extends Ui.WatchFace {
     function onLayout(dc) {
         deviceSettings = Sys.getDeviceSettings();
       	
-      	// Canvas management
     	canvas_w = dc.getWidth();
     	canvas_h = dc.getHeight();
     	centerpoint = [canvas_w/2, canvas_h/2];
-    	
-		// check the orientation
-		if ( canvas_h > (canvas_w*1.2) ) {
-		  vert_layout = true;
-		} else {
-		  vert_layout = false;
-		}
-		
-		// let's grab the canvas shape
-		var deviceSettings = Sys.getDeviceSettings();
-		canvas_shape = deviceSettings.screenShape;
-		
-		// find out the type of screen on the device
-		canvas_tall = (vert_layout && canvas_shape == SCREEN_SHAPE_RECT) ? true : false;
-		canvas_rect = (canvas_shape == SCREEN_SHAPE_RECT && !vert_layout) ? true : false;
-		canvas_circ = (canvas_shape == SCREEN_SHAPE_CIRC) ? true : false;
-		canvas_semicirc = (canvas_shape == SCREEN_SHAPE_SEMICIRC) ? true : false;
-		canvas_r240 =  (canvas_w == 240 && canvas_w == 240) ? true : false;
-		
-		// set offsets based on screen type
-		// positioning for different screen layouts
-		if (canvas_tall) {
-			y_offset_nyan = 30;
-			s_offset_time = 87;
-			s_yoffset_batt = 8;
-			s_xoffset_batt = canvas_w / 2;
-		}
-		if (canvas_rect) {
-			y_offset_nyan = 35;
-			s_offset_time = 70;
-			s_yoffset_batt = 8;
-			s_xoffset_batt = canvas_w - 20;
-		}
-		if (canvas_circ) {
-			if (canvas_r240) {
-				y_offset_nyan = 30;
-				s_offset_time = 95;
-				s_yoffset_batt = 14;
-				s_xoffset_batt = canvas_w /2;
-		 	} else {
-			    y_offset_nyan = 30;
-			    s_offset_time = 86;
-			    s_yoffset_batt = 8;
-			    s_xoffset_batt = canvas_w /2;
-		  	}
-		}
-		if (canvas_semicirc) {
-			  y_offset_nyan = 32;
-			  s_offset_time = 70;
-			  s_yoffset_batt = -1;
-			  s_xoffset_batt = canvas_w /2;
-		}	
-		
-		
+    	    	
         setLayout(Rez.Layouts.WatchFace(dc));
         
         // Fonts
@@ -388,7 +323,6 @@ class PokeWatchView extends Ui.WatchFace {
     	sceneIdx = 0;
     	is_animating = true;
     	yOffset = 0;
-    	health_remaining = 1;
     	timerDelay = 500;
 	   	TIMER_1 = new Timer.Timer();
     	TIMER_1.start(method(:timerCallback), timerDelay, false);
@@ -396,10 +330,10 @@ class PokeWatchView extends Ui.WatchFace {
 
     // Terminate any active timers and prepare for slow updates.
     function onEnterSleep() {
+		Attention.backlight(false);
     	sceneIdx = 0;
     	is_animating = false;
     	yOffset = 0;
-    	health_remaining = 1;
     	timerDelay = 1000;
     	Ui.requestUpdate();
     	
