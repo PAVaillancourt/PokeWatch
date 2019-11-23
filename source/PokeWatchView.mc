@@ -3,7 +3,6 @@
  * (c) 2019
  */
 
-using Toybox.WatchUi;
 using Toybox.Time;
 using Toybox.Time.Gregorian;
 using Toybox.WatchUi as Ui;
@@ -13,7 +12,6 @@ using Toybox.Lang as Lang;
 using Toybox.Application as App;
 using Toybox.Timer as Timer;
 using Toybox.Math;
-using Toybox.Attention;
 
 class PokeWatchView extends Ui.WatchFace {
 	
@@ -233,7 +231,6 @@ class PokeWatchView extends Ui.WatchFace {
         	case(6):
         		// Thunderbolts visible
         		//System.println("Case 6");
-        		Attention.backlight(true);
         		drawOpponent(opponent, dc);
         		writeThunder(canvas_w, box_y_pos, dc);
         		drawThunderBolts(opponent, dc, thunderbolts);
@@ -330,7 +327,6 @@ class PokeWatchView extends Ui.WatchFace {
 
     // Terminate any active timers and prepare for slow updates.
     function onEnterSleep() {
-		Attention.backlight(false);
     	sceneIdx = 0;
     	is_animating = false;
     	yOffset = 0;
