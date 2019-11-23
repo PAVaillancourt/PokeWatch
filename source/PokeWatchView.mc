@@ -149,7 +149,7 @@ class PokeWatchView extends Ui.WatchFace {
 		drawTime(dc);        
         drawSelf(pikachu, dc);
         drawInfoBox(box_x_pos, box_y_pos, dc);
-        
+		System.println(health_remaining);        
 		// Select opponent according to step progress
 		if (sceneIdx == 0) {
 			opponent = selectOpponent(opponentList);
@@ -295,7 +295,7 @@ class PokeWatchView extends Ui.WatchFace {
       	//System.println("End");
         sceneIdx++;
     	if (sceneIdx >= frames_qty) {
-			sceneIdx = frames_qty -1;
+			sceneIdx = frames_qty - 1;
 		}
     }
 
@@ -329,6 +329,7 @@ class PokeWatchView extends Ui.WatchFace {
     function onEnterSleep() {
     	sceneIdx = 0;
     	is_animating = false;
+    	health_remaining = 1;
     	yOffset = 0;
     	timerDelay = 1000;
     	Ui.requestUpdate();
