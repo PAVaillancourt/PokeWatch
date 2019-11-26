@@ -131,7 +131,7 @@ class PokeWatchView extends Ui.WatchFace {
 	    charizard = new pokemon("Charizard",":L42",pos_x_160,pos_y_70);
 	    blastoise = new pokemon("Blastoise",":L69",pos_x_160,pos_y_70);
 	    missingno = new pokemon("Missigno",":L99",pos_x_160,pos_y_70);
-	    pikachu = new pokemon("PIKACHU", ":L9", 40*canvas_w/240,148*canvas_h/240);
+	    pikachu = new pokemon("PIKACHU", ":L", 40*canvas_w/240,148*canvas_h/240);
         pikachu.setBitmap(Ui.loadResource(Rez.Drawables.pikachu_behind));
         pikachu.setAttack("Thunder");
         charmander.setBitmap(Ui.loadResource(Rez.Drawables.charmander));       
@@ -164,7 +164,10 @@ class PokeWatchView extends Ui.WatchFace {
         dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
 
         // Draw "constant" components
-		drawTime(dc);        
+		drawTime(dc);
+		var pikachu_lvl = getStepProgress(99) > 100 ? 99 : getStepProgress(99);
+		pikachu_lvl = pikachu_lvl < 4 ? 4 : pikachu_lvl;
+		pikachu.setLvl(":L" + (pikachu_lvl.toString()));
         drawSelf(pikachu, dc);
         drawInfoBox(box_x_pos, box_y_pos, dc);
  
@@ -415,7 +418,7 @@ class PokeWatchView extends Ui.WatchFace {
     
     function drawOpponent(opponent, dc) { 
         var opponent_pos = opponent.getPosXY();
-        var opponent_name_pos = [17, canvas_h/4 + 5];   
+        var opponent_name_pos = canvas_w > 240 ? [27, canvas_h/4 + 5] : [17, canvas_h/4 + 5];   
              
 		dc.drawBitmap(opponent_pos[0], opponent_pos[1] + yOffset, opponent.getBitmap());
         dc.drawText(opponent_name_pos[0], opponent_name_pos[1], poke_text_medium, opponent.getName().toUpper(), Gfx.TEXT_JUSTIFY_LEFT);
@@ -431,7 +434,7 @@ class PokeWatchView extends Ui.WatchFace {
 
     function drawSelf(pikachu, dc) {
         var self_pos = pikachu.getPosXY();
-        var self_name_pos = [canvas_w/2-15, canvas_h/2 + 20];
+        var self_name_pos = canvas_w > 240 ? [canvas_w/2-10, canvas_h/2 + 20] : [canvas_w/2-15, canvas_h/2 + 20];
         
         dc.drawText(self_name_pos[0], self_name_pos[1], poke_text_medium, pikachu.getName(), Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawText(self_name_pos[0] + 50, self_name_pos[1] + 15, poke_text_small, pikachu.getLvl(), Gfx.TEXT_JUSTIFY_LEFT);
@@ -456,7 +459,7 @@ class PokeWatchView extends Ui.WatchFace {
     
     // Draws an increasingly wide white rectangle over green part of health bar
     function lowerOpponentHealth(health_remaining, dc) {
-        var opponent_name_pos = [17, canvas_h/4 + 5];
+        var opponent_name_pos = canvas_w > 240 ? [27, canvas_h/4 + 5] : [17, canvas_h/4 + 5];  
         var health_bar_width = health_full.getWidth() - 6; // Width of green part
         var hbw_adjusted = health_bar_width * health_remaining;
         // Adjusting for rounding
@@ -472,14 +475,21 @@ class PokeWatchView extends Ui.WatchFace {
     		);
     }
     
-    // Picks an opponent first based on % of step goal, then randomly
-    function selectOpponent(opponentList) {
+    // Returns the step progress in the form of a 
+    function getStepProgress(integer) {
     	// step progress
       	var thisActivity = ActivityMonitor.getInfo();
 		steps = thisActivity.steps;
 		goal = thisActivity.stepGoal;
 		// define our current step progress
-		stepProgress = ((steps.toFloat()/goal.toFloat())*3).toNumber();
+		stepProgress = ((steps.toFloat()/goal.toFloat())*integer).toNumber();
+		return stepProgress;
+    }
+    
+    // Picks an opponent first based on % of step goal, then randomly
+    function selectOpponent(opponentList) {
+    	// step progress
+		stepProgress = getStepProgress(3);
 		if (stepProgress >= 6) {
 			stepProgress = 3;
 		} else {
@@ -493,6 +503,7 @@ class PokeWatchView extends Ui.WatchFace {
 			case(2):
 				pokemonPos = Math.rand() % 2;
 				break;
+			case(3):
 			default:
 				pokemonPos = 0;
 		}
