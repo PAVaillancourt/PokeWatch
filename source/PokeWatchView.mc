@@ -19,7 +19,6 @@ class PokeWatchView extends Ui.WatchFace {
 	var TIMER_1;
 	var ani_step = null;
 	var is_animating = false;
-	var frames_qty = 12;
 	var sceneIdx = 0;
 	var yOffset = 0;
 	var timerDelay = 500;
@@ -31,22 +30,24 @@ class PokeWatchView extends Ui.WatchFace {
     var canvas_h = 0;
     var canvas_w = 0;
     var centerpoint = [0,0];
+    var arc_start = 0;
+    var arc_end = 0;
     
     // Opponents
-    var charmander = new pokemon("Charmander",":L4",180,75);
-    var squirtle = new pokemon("Squirtle",":L8",170,75);
-    var bulbasaur = new pokemon("Bulbasaur",":L15",170,70);
-    var ivysaur = new pokemon("Ivysaur",":L16",160,70);
-    var wartortle = new pokemon("Wartortle",":L23",160,70);
-    var charizard = new pokemon("Charizard",":L42",160,70);
-    var blastoise = new pokemon("Blastoise",":L69",160,70);
-    var missingno = new pokemon("Missigno",":L99",160,70);
+	var charmander = null;
+	var squirtle = null;
+	var bulbasaur = null;
+	var ivysaur = null;
+	var wartortle = null;
+	var charizard = null;
+	var blastoise = null;
+	var missingno = null;
     var opponent = null;
     var opponentList = null;
     
     // Pikachu
     var thunderbolts = null;
-    var pikachu = new pokemon("PIKACHU", ":L9", 40, 148);
+    var pikachu = null;
 
     // Common pokemon resources
     var pok_hp = null;
@@ -60,8 +61,8 @@ class PokeWatchView extends Ui.WatchFace {
     // Text box
     var box_ball_left = null;
 	var box_ball_right = null;
-    var box_y_pos = 190;
-    var box_x_pos = 30;
+    var box_y_pos = null;
+    var box_x_pos = null;
 
     // Fonts
     var poke_time = null;
@@ -95,6 +96,8 @@ class PokeWatchView extends Ui.WatchFace {
     	canvas_w = dc.getWidth();
     	canvas_h = dc.getHeight();
     	centerpoint = [canvas_w/2, canvas_h/2];
+    	arc_start = canvas_w > 240 ? 224 : 225;
+    	arc_end = canvas_w > 240 ? 316 : 315;
     	    	
         setLayout(Rez.Layouts.WatchFace(dc));
         
@@ -107,13 +110,28 @@ class PokeWatchView extends Ui.WatchFace {
         box_ball_right = Ui.loadResource(Rez.Drawables.box_ball);
         
         // GUI
+        box_y_pos = 19*canvas_h/24;
+    	box_x_pos = 3*canvas_w/24;
         health_full = Ui.loadResource(Rez.Drawables.health_full);
         half_border_enemy = Ui.loadResource(Rez.Drawables.half_border_enemy);
         half_border_self = Ui.loadResource(Rez.Drawables.half_border_self);
         pok_hp = "HP:";
         pokeball = Ui.loadResource(Rez.Drawables.pokeball);
         
+        // Precalcs
+        var pos_x_160 = 160 * canvas_w / 240;
+        var pos_y_70 = 70 * canvas_h / 240;
+        
         // Pokemons
+        charmander = new pokemon("Charmander",":L4",180*canvas_w/240,75*canvas_h/240);
+	    squirtle = new pokemon("Squirtle",":L8",170*canvas_w/240,75*canvas_h/240);
+	    bulbasaur = new pokemon("Bulbasaur",":L15",170,pos_y_70);
+	    ivysaur = new pokemon("Ivysaur",":L16",pos_x_160,pos_y_70);
+	    wartortle = new pokemon("Wartortle",":L23",pos_x_160,pos_y_70);
+	    charizard = new pokemon("Charizard",":L42",pos_x_160,pos_y_70);
+	    blastoise = new pokemon("Blastoise",":L69",pos_x_160,pos_y_70);
+	    missingno = new pokemon("Missigno",":L99",pos_x_160,pos_y_70);
+	    pikachu = new pokemon("PIKACHU", ":L9", 40*canvas_w/240,148*canvas_h/240);
         pikachu.setBitmap(Ui.loadResource(Rez.Drawables.pikachu_behind));
         pikachu.setAttack("Thunder");
         charmander.setBitmap(Ui.loadResource(Rez.Drawables.charmander));       
@@ -149,7 +167,7 @@ class PokeWatchView extends Ui.WatchFace {
 		drawTime(dc);        
         drawSelf(pikachu, dc);
         drawInfoBox(box_x_pos, box_y_pos, dc);
-		System.println(health_remaining);        
+ 
 		// Select opponent according to step progress
 		if (sceneIdx == 0) {
 			opponent = selectOpponent(opponentList);
@@ -294,9 +312,6 @@ class PokeWatchView extends Ui.WatchFace {
       
       	//System.println("End");
         sceneIdx++;
-    	if (sceneIdx >= frames_qty) {
-			sceneIdx = frames_qty - 1;
-		}
     }
 
     // Called when this View is removed from the screen. Save the
@@ -357,7 +372,7 @@ class PokeWatchView extends Ui.WatchFace {
 		}
 		
 		var timeString = Lang.format("$1$:$2$", [hour, minute.format("%02d")]);
-        dc.drawText(canvas_w/2, 20, poke_time, timeString, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(canvas_w/2, 20*canvas_h/240, poke_time, timeString, Gfx.TEXT_JUSTIFY_CENTER);
     }
 
     function writeOpponentAppears(opponent, canvas_w, box_y_pos, dc) {  
@@ -380,7 +395,7 @@ class PokeWatchView extends Ui.WatchFace {
     }
     
     function drawPokeBall(opponent, dc) {
-    	dc.drawBitmap(opponent.getPosX(), opponent.getPosY()+40, pokeball);
+    	dc.drawBitmap(opponent.getPosX(), opponent.getPosY()+35, pokeball);
     }
     
     function drawOpeningPokeBall(opponent, dc) {
@@ -428,11 +443,11 @@ class PokeWatchView extends Ui.WatchFace {
     
     function drawInfoBox(box_x_pos, box_y_pos, dc) {
         dc.setPenWidth(2);
-        dc.drawArc(canvas_w/2, canvas_h/2, canvas_w/2 - 4, Gfx.ARC_COUNTER_CLOCKWISE, 225, 315); 
+        dc.drawArc(canvas_w/2, canvas_h/2, canvas_w/2 - 4, Gfx.ARC_COUNTER_CLOCKWISE, arc_start, arc_end); 
         dc.drawLine(box_x_pos + box_ball_left.getWidth(), box_y_pos + box_ball_left.getHeight()/2+1,
         			 canvas_w - box_x_pos - box_ball_right.getWidth(), box_y_pos + box_ball_right.getHeight()/2+1);
         dc.setPenWidth(1);
-		dc.drawArc(canvas_w/2, canvas_h/2, canvas_w/2 - 6, Gfx.ARC_COUNTER_CLOCKWISE, 225, 315); 
+		dc.drawArc(canvas_w/2, canvas_h/2, canvas_w/2 - 6, Gfx.ARC_COUNTER_CLOCKWISE, arc_start, arc_end); 
         dc.drawLine(box_x_pos + box_ball_left.getWidth()-1, box_y_pos + box_ball_left.getHeight()/2-2,
         			 canvas_w - box_x_pos - box_ball_right.getWidth()+1, box_y_pos + box_ball_right.getHeight()/2-2);
         dc.drawBitmap(box_x_pos, box_y_pos, box_ball_left);
