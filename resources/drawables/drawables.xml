@@ -9,7 +9,6 @@
     <bitmap id="blastoise" filename="blastoise.png" />
     <bitmap id="charizard" filename="charizard.png" />
     <bitmap id="pikachu_behind" filename="pikachu_behind.png" />
-    <bitmap id="health_full" filename="health_full.png" />
     <bitmap id="health_empty" filename="health_empty.png" />
     <bitmap id="half_border_enemy" filename="half_border_enemy.png" />
     <bitmap id="half_border_self" filename="half_border_self.png" />

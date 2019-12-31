@@ -50,7 +50,6 @@ class PokeWatchView extends Ui.WatchFace {
     var pikachu = null;
 
     // Common pokemon resources
-    //var health_full = null;
     var health_empty = null;
     var half_border_enemy = null;
     var half_border_self = null;
@@ -112,7 +111,6 @@ class PokeWatchView extends Ui.WatchFace {
         // GUI
         box_y_pos = 19*canvas_h/24;
     	box_x_pos = 3*canvas_w/24;
-        //health_full = Ui.loadResource(Rez.Drawables.health_full);
         health_empty = Ui.loadResource(Rez.Drawables.health_empty);
         half_border_enemy = Ui.loadResource(Rez.Drawables.half_border_enemy);
         half_border_self = Ui.loadResource(Rez.Drawables.half_border_self);
@@ -262,8 +260,7 @@ class PokeWatchView extends Ui.WatchFace {
     			drawOpponent(opponent, dc);
         		if (health_remaining > 0.1) { // Can't be 0 since 0.0000000 != 0 ...
         			sceneIdx--;
-        			health_remaining -= 0.25;
-        			//lowerOpponentHealth(health_remaining, dc);
+        			health_remaining -= 0.20;
         		}
         		break;
         	case(8):
@@ -425,10 +422,6 @@ class PokeWatchView extends Ui.WatchFace {
 		dc.drawText(opponent_name_pos[0]+3, opponent_name_pos[1]+30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawBitmap(opponent_name_pos[0]-12, opponent_name_pos[1]+15, half_border_enemy);
         dc.drawBitmap(opponent_name_pos[0]+27, opponent_name_pos[1]+32, health_empty);
-        //// Fixing a bug where health bar fills after being lowered
-        //if (health_remaining < 0.1) {
-        //	lowerOpponentHealth(health_remaining, dc);
-        //}
     }
 
     function drawSelf(pikachu, dc) {
@@ -473,7 +466,7 @@ class PokeWatchView extends Ui.WatchFace {
 		// Coloring the remaining health
         if (health_remaining > 0.5) {
 	        dc.setColor(Gfx.COLOR_GREEN, Gfx.COLOR_WHITE);
-    	} else if (health_remaining > 0.2){
+    	} else if (health_remaining > 0.21){
 	        dc.setColor(Gfx.COLOR_YELLOW, Gfx.COLOR_WHITE);
 		} else {
 			dc.setColor(Gfx.COLOR_RED, Gfx.COLOR_WHITE);
@@ -529,6 +522,9 @@ class PokeWatchView extends Ui.WatchFace {
     // Fills Pikachu's health according to remaining battery level
     function lowerSelfHealth(dc) {
     	var remainingBattery = Sys.getSystemStats().battery/100;
+    	if (remainingBattery == null) {
+    		remainingBattery = 0;
+    	}
         var self_name_pos = canvas_w > 240 ? [canvas_w/2 - 12, canvas_h/2 + 20] : [canvas_w/2 - 17, canvas_h/2 + 20];  
         var health_bar_width = health_empty.getWidth() - 6; // Width of part to fill
         var hbw_adjusted = null;
@@ -543,7 +539,7 @@ class PokeWatchView extends Ui.WatchFace {
 		// Coloring the remaining health
         if (remainingBattery > 0.5) {
 	        dc.setColor(Gfx.COLOR_GREEN, Gfx.COLOR_WHITE);
-    	} else if (remainingBattery > 0.2){
+    	} else if (remainingBattery > 0.20){
 	        dc.setColor(Gfx.COLOR_YELLOW, Gfx.COLOR_WHITE);
 		} else {
 			dc.setColor(Gfx.COLOR_RED, Gfx.COLOR_WHITE);
