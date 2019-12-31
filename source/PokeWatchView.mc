@@ -50,8 +50,8 @@ class PokeWatchView extends Ui.WatchFace {
     var pikachu = null;
 
     // Common pokemon resources
-    var pok_hp = null;
-    var health_full = null;
+    //var health_full = null;
+    var health_empty = null;
     var half_border_enemy = null;
     var half_border_self = null;
     var pokeball = null;
@@ -112,10 +112,10 @@ class PokeWatchView extends Ui.WatchFace {
         // GUI
         box_y_pos = 19*canvas_h/24;
     	box_x_pos = 3*canvas_w/24;
-        health_full = Ui.loadResource(Rez.Drawables.health_full);
+        //health_full = Ui.loadResource(Rez.Drawables.health_full);
+        health_empty = Ui.loadResource(Rez.Drawables.health_empty);
         half_border_enemy = Ui.loadResource(Rez.Drawables.half_border_enemy);
         half_border_self = Ui.loadResource(Rez.Drawables.half_border_self);
-        pok_hp = "HP:";
         pokeball = Ui.loadResource(Rez.Drawables.pokeball);
         
         // Precalcs
@@ -263,7 +263,7 @@ class PokeWatchView extends Ui.WatchFace {
         		if (health_remaining > 0.1) { // Can't be 0 since 0.0000000 != 0 ...
         			sceneIdx--;
         			health_remaining -= 0.25;
-        			lowerOpponentHealth(health_remaining, dc);
+        			//lowerOpponentHealth(health_remaining, dc);
         		}
         		break;
         	case(8):
@@ -271,9 +271,7 @@ class PokeWatchView extends Ui.WatchFace {
         		//System.println("Case 9");
         		if (yOffset < 100) {
 	    			drawOpponent(opponent, dc);
-	    			lowerOpponentHealth(health_remaining, dc);
         			yOffset += 20;
-        			//dc.clear();
         			dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_WHITE);
         			dc.fillRectangle(opponent.getPosX(), opponent.getPosY()+opponent.getBmpHeight()+10, 70, 80);
         			dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
@@ -419,17 +417,18 @@ class PokeWatchView extends Ui.WatchFace {
     function drawOpponent(opponent, dc) { 
         var opponent_pos = opponent.getPosXY();
         var opponent_name_pos = canvas_w > 240 ? [27, canvas_h/4 + 5] : [17, canvas_h/4 + 5];   
-             
+        
+        lowerOpponentHealth(health_remaining, dc);
 		dc.drawBitmap(opponent_pos[0], opponent_pos[1] + yOffset, opponent.getBitmap());
         dc.drawText(opponent_name_pos[0], opponent_name_pos[1], poke_text_medium, opponent.getName().toUpper(), Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawText(opponent_name_pos[0]+28, opponent_name_pos[1]+15, poke_text_small, opponent.getLvl(), Gfx.TEXT_JUSTIFY_LEFT);
 		dc.drawText(opponent_name_pos[0]+3, opponent_name_pos[1]+30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawBitmap(opponent_name_pos[0]-12, opponent_name_pos[1]+15, half_border_enemy);
-        dc.drawBitmap(opponent_name_pos[0]+27, opponent_name_pos[1]+32, health_full);
-        // Fixing a bug where health bar fills after being lowered
-        if (health_remaining < 0.1) {
-        	lowerOpponentHealth(health_remaining, dc);
-        }
+        dc.drawBitmap(opponent_name_pos[0]+27, opponent_name_pos[1]+32, health_empty);
+        //// Fixing a bug where health bar fills after being lowered
+        //if (health_remaining < 0.1) {
+        //	lowerOpponentHealth(health_remaining, dc);
+        //}
     }
 
     function drawSelf(pikachu, dc) {
@@ -439,7 +438,8 @@ class PokeWatchView extends Ui.WatchFace {
         dc.drawText(self_name_pos[0], self_name_pos[1], poke_text_medium, pikachu.getName(), Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawText(self_name_pos[0] + 50, self_name_pos[1] + 15, poke_text_small, pikachu.getLvl(), Gfx.TEXT_JUSTIFY_LEFT);
 		dc.drawText(self_name_pos[0], self_name_pos[1] + 30, poke_text_tiny_bold, "HP:", Gfx.TEXT_JUSTIFY_LEFT);
-        dc.drawBitmap(self_name_pos[0] + 25, self_name_pos[1] + 32, health_full);
+        dc.drawBitmap(self_name_pos[0] + 25, self_name_pos[1] + 32, health_empty);
+        lowerSelfHealth(dc);
         dc.drawBitmap(self_name_pos[0] - 10, self_name_pos[1] + 20, half_border_self);
         dc.drawBitmap(self_pos[0], self_pos[1], pikachu.getBitmap());
     }
@@ -457,22 +457,37 @@ class PokeWatchView extends Ui.WatchFace {
         dc.drawBitmap(canvas_w - box_x_pos - box_ball_right.getWidth(), box_y_pos, box_ball_right);
     }
     
-    // Draws an increasingly wide white rectangle over green part of health bar
+    // Fills the health bar according to remaining battery lvl
     function lowerOpponentHealth(health_remaining, dc) {
         var opponent_name_pos = canvas_w > 240 ? [27, canvas_h/4 + 5] : [17, canvas_h/4 + 5];  
-        var health_bar_width = health_full.getWidth() - 6; // Width of green part
-        var hbw_adjusted = health_bar_width * health_remaining;
-        // Adjusting for rounding
+        var health_bar_width = health_empty.getWidth() - 6; // Width of fillable part
+        var hbw_adjusted = null;
+    	
+    	// Adjusting for rounding
         if (health_remaining <= 0.1) {
         	hbw_adjusted = -3;
+    	} else {
+        	hbw_adjusted = health_bar_width * health_remaining + 2;
     	}
-        dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_WHITE);
+    	
+		// Coloring the remaining health
+        if (health_remaining > 0.5) {
+	        dc.setColor(Gfx.COLOR_GREEN, Gfx.COLOR_WHITE);
+    	} else if (health_remaining > 0.2){
+	        dc.setColor(Gfx.COLOR_YELLOW, Gfx.COLOR_WHITE);
+		} else {
+			dc.setColor(Gfx.COLOR_RED, Gfx.COLOR_WHITE);
+		}
+    	
     	dc.fillRectangle(
-    		opponent_name_pos[0] + 32 + hbw_adjusted,
+    		opponent_name_pos[0] + 29,
     		opponent_name_pos[1] + 34,
-    		Math.round(health_bar_width - hbw_adjusted),
+    		Math.round(hbw_adjusted),
     		2
-    		);
+		);
+		
+		// Reset canvas color
+        dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
     }
     
     // Returns the step progress in the form of a 
@@ -508,6 +523,40 @@ class PokeWatchView extends Ui.WatchFace {
 				pokemonPos = 0;
 		}
 		return opponentList[stepProgress][pokemonPos];
+    }
+    
+   
+    // Fills Pikachu's health according to remaining battery level
+    function lowerSelfHealth(dc) {
+    	var remainingBattery = Sys.getSystemStats().battery/100;
+        var self_name_pos = canvas_w > 240 ? [canvas_w/2 - 12, canvas_h/2 + 20] : [canvas_w/2 - 17, canvas_h/2 + 20];  
+        var health_bar_width = health_empty.getWidth() - 6; // Width of part to fill
+        var hbw_adjusted = null;
+
+        // Adjusting for rounding
+        if (remainingBattery < 0.01) {
+        	hbw_adjusted = -3;
+    	} else {
+	        hbw_adjusted = health_bar_width * remainingBattery + 2;
+		}    	
+
+		// Coloring the remaining health
+        if (remainingBattery > 0.5) {
+	        dc.setColor(Gfx.COLOR_GREEN, Gfx.COLOR_WHITE);
+    	} else if (remainingBattery > 0.2){
+	        dc.setColor(Gfx.COLOR_YELLOW, Gfx.COLOR_WHITE);
+		} else {
+			dc.setColor(Gfx.COLOR_RED, Gfx.COLOR_WHITE);
+		}
+		
+    	dc.fillRectangle(
+    		self_name_pos[0] + 29,
+    		self_name_pos[1] + 34,
+    		Math.round(hbw_adjusted),
+    		2
+		);
+		// Reset canvas color
+        dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
     }
     
 	class pokemon {
