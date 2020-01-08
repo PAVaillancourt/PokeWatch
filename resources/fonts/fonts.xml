@@ -1,6 +1,0 @@
-<fonts>
-  <font id="poke_time" filename="poke_font_22.fnt" antialias="true" filter="0123456789:"/>
-  <font id="poke_text_medium" filename="poke_font_16.fnt" antialias="true"/>
-  <font id="poke_text_small" filename="poke_font_11.fnt" antialias="true"/>
-  <font id="poke_text_tiny_bold" filename="poke_font_8_bold.fnt" antialias="true"/>
-</fonts>
