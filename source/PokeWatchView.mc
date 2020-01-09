@@ -49,7 +49,8 @@ class PokeWatchView extends Ui.WatchFace {
     var pokemonSelfIdx = null;
     var pokemonSelf = null;
     var thunderbolts = null;
-    var pikachu = null;
+    var emberBig = null;
+    var emberSmall = null;
 
     // Common pokemon resources
     var healthEmpty = null;
@@ -156,6 +157,8 @@ class PokeWatchView extends Ui.WatchFace {
         
         // Animations
         thunderbolts = Ui.loadResource(Rez.Drawables.thunderbolts);
+        emberSmall = Ui.loadResource(Rez.Drawables.emberSmall);
+        emberBig = Ui.loadResource(Rez.Drawables.emberBig);
         pokeballOpening = Ui.loadResource(Rez.Drawables.pokeballOpening);
     }
 
@@ -180,9 +183,9 @@ class PokeWatchView extends Ui.WatchFace {
 
         // Draw "constant" components
 		drawTime(dc);
-		var pokemonSelfLvl = getStepProgress(99) > 100 ? 99 : getStepProgress(99);
-		pokemonSelfLvl = pokemonSelfLvl < 4 ? 4 : pokemonSelfLvl;
-		pokemonSelf.setLvl(":L" + (pokemonSelfLvl.toString()));
+		if (App.getApp().getProperty("ShowDate")) {
+			drawDate(dc);
+		}
         drawSelf(pokemonSelf, dc);
         drawInfoBox(boxX, boxY, dc);
  
@@ -380,14 +383,18 @@ class PokeWatchView extends Ui.WatchFace {
     	return null;	
     } 
     
+    // Makes changes according to the most recent settings
     function applySettingsChanges() {
 		pokemonSelfIdx = App.getApp().getProperty("YourPokemon");
 		pokemonSelf = assignPokemonSelf(pokemonSelfIdx);
+		if (!App.getApp().getProperty("CustomName").equals("")) {
+			pokemonSelf.setName(App.getApp().getProperty("CustomName"));
+		}
 		settingsChangedSinceLastDraw = false;
     }
     
     function drawTime(dc) {
-    	// Get time and date
+    	// Get time
     	var clockTime = Sys.getClockTime();
     	hour = clockTime.hour;
 	    minute = clockTime.min;
@@ -403,7 +410,21 @@ class PokeWatchView extends Ui.WatchFace {
 		}
 		
 		var timeString = Lang.format("$1$:$2$", [hour, minute.format("%02d")]);
-        dc.drawText(canvasW/2, 20*canvasH/240, pokeTime, timeString, Gfx.TEXT_JUSTIFY_CENTER);
+        dc.drawText(canvasW/2, 18*canvasH/240, pokeTime, timeString, Gfx.TEXT_JUSTIFY_CENTER);
+    }
+    
+    function drawDate(dc) {
+    	// Get date
+		var date = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM);
+        var day = date.day;
+        var month = date.month;
+        var year = date.year;
+        var day_of_week = Time.Gregorian.info(Time.now(), Time.FORMAT_MEDIUM).day_of_week;
+    	
+    	var dateString = Lang.format("$1$ $2$", [month, day]);
+    	dc.drawText(canvasW/2, 8*canvasH/240, pokeTextSmall, dateString, Gfx.TEXT_JUSTIFY_CENTER);
+    	
+    	return null;
     }
 
     function writeOpponentAppears(opponent, canvasW, boxY, dc) {  
@@ -444,6 +465,65 @@ class PokeWatchView extends Ui.WatchFace {
     	dc.drawBitmap(centerX - thunderW/2, centerY - thunderH/2, thunderbolts);
     } 
     
+    // Draws a double-colored, triple-layered ellipse
+    function drawPsyEllipse(x, y, radX, radY, dc) {
+    	// Outer ellipse
+    	dc.setColor(Gfx.COLOR_PURPLE, Gfx.COLOR_TRANSPARENT);
+    	dc.setPenWidth(4);
+    	dc.drawEllipse(x, y, radX, radY);
+    	
+    	// Inner (white) ellipse
+    	dc.setPenWidth(2);
+    	dc.setColor(Gfx.COLOR_WHITE, Gfx.COLOR_TRANSPARENT);
+    	dc.drawEllipse(x, y, radX, radY);
+    	
+    	// Clean up
+    	dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
+    }
+    
+    function drawPsywave(pokemonSelf, attackIdx, dc) {
+    	var currentRelXY = pokemonSelf.getPosXY();
+    	currentRelXY[0] = currentRelXY[0]+pokemonSelf.getBmpWidth();
+    	var radX = [7, 10, 13];
+    	var radY = [13, 17, 22];
+    	
+    	switch(attackIdx) {
+    		case(3):
+    		case(2):
+				drawPsyEllipse(currentRelXY[0]+50, currentRelXY[1]-40, radX[2], radY[2], dc);
+				drawPsyEllipse(currentRelXY[0]+65, currentRelXY[1]-28, radX[2], radY[2], dc);
+				drawPsyEllipse(currentRelXY[0]+22, currentRelXY[1]-20, radX[1], radY[2], dc);
+				drawPsyEllipse(currentRelXY[0]+37, currentRelXY[1]-8, radX[1], radY[2], dc);    
+			case(1):
+				drawPsyEllipse(currentRelXY[0]-10, currentRelXY[1], radX[0], radY[0], dc);
+				drawPsyEllipse(currentRelXY[0]+5, currentRelXY[1]+12, radX[0], radY[0], dc);
+			default:
+				break;
+		}
+    }
+    
+    function drawEmbers(opponent, attackIdx, emberSmall, emberBig, dc) {
+    	var opponentXY = opponent.getPosXY();
+    	opponentXY[1] = opponentXY[1] + opponent.getBmpHeight(); 
+    	
+    	switch(attackIdx) {
+    		case(1):
+    			dc.drawBitmap(opponentXY[0], opponentXY[1]-emberSmall.getHeight(), emberSmall);
+    			dc.drawBitmap(opponentXY[0]+25, opponentXY[1]-emberSmall.getHeight(), emberSmall);
+    			break;
+    		case(2):
+    			dc.drawBitmap(opponentXY[0], opponentXY[1]-emberBig.getHeight(), emberBig);
+    			dc.drawBitmap(opponentXY[0]+25, opponentXY[1]-emberBig.getHeight(), emberBig);
+    			break;
+    		case(3):
+    			dc.drawBitmap(opponentXY[0], opponentXY[1]-emberSmall.getHeight(), emberSmall);
+    			dc.drawBitmap(opponentXY[0]+25, opponentXY[1]-emberSmall.getHeight(), emberSmall);
+    			break;
+    		default:
+    			break;
+    	}
+    }
+    
     function drawBubbles(pokemonSelf, attackIdx, dc) {
     	var currentRelXY = pokemonSelf.getPosXY();
     	currentRelXY[0] = currentRelXY[0]+pokemonSelf.getBmpWidth();
@@ -452,7 +532,6 @@ class PokeWatchView extends Ui.WatchFace {
     	var bigBubbleXY = null;
     	
     	dc.setPenWidth(2);
-    	//dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_RED);
     	
     	switch(attackIdx) {
     		case(3):
@@ -556,6 +635,7 @@ class PokeWatchView extends Ui.WatchFace {
     	}
     }
     
+    // Draw a single small bubble with an interior arc for 3d effect
     function drawSmallBubble(x, y, radius, dc) {
         dc.drawCircle(x, y, radius);
         dc.drawArc(x, y, radius-1, Gfx.ARC_CLOCKWISE, 0, 270 );
@@ -574,9 +654,13 @@ class PokeWatchView extends Ui.WatchFace {
         dc.drawBitmap(opponentNamePos[0]+27, opponentNamePos[1]+32, healthEmpty);
     }
 
+    // Draws the player's pokemon and the associated infobox
     function drawSelf(pokemonSelf, dc) {
         var selfPos = pokemonSelf.getPosXY();
         var selfNamePos = canvasW > 240 ? [canvasW/2-10, canvasH/2 + 20] : [canvasW/2-15, canvasH/2 + 20];
+		var pokemonSelfLvl = getStepProgress(99) > 100 ? 99 : getStepProgress(99);
+		pokemonSelfLvl = pokemonSelfLvl < 4 ? 4 : pokemonSelfLvl;
+		pokemonSelf.setLvl(":L" + (pokemonSelfLvl.toString()));
         
         dc.drawText(selfNamePos[0], selfNamePos[1], pokeTextMedium, pokemonSelf.getName().toUpper(), Gfx.TEXT_JUSTIFY_LEFT);
         dc.drawText(selfNamePos[0] + 50, selfNamePos[1] + 15, pokeTextSmall, pokemonSelf.getLvl(), Gfx.TEXT_JUSTIFY_LEFT);
@@ -711,13 +795,16 @@ class PokeWatchView extends Ui.WatchFace {
 			case("Thunder"):
 				drawThunderBolts(opponent, dc, thunderbolts);
 				break;
-			case("Tackle"):
-			//TODO
+			case("Psywave"):
+				drawPsywave(pokemonSelf, attackAnimationIdx, dc);
+				break;
 			case("Ember"):
-			//TODO
+				drawEmbers(opponent, attackAnimationIdx, emberSmall, emberBig, dc);
+				break;
 			case("Bubble"):
-			default:
 				drawBubbles(pokemonSelf, attackAnimationIdx, dc);
+				break;
+			default:
 				break;
 		}
 	}
@@ -731,26 +818,37 @@ class PokeWatchView extends Ui.WatchFace {
 		        pokemonSelf.setAttack("Thunder");
 				break;
 			case(1):
-				// Eevee
-			    pokemonSelf = new pokemon("Eevee", ":L", 42*canvasW/240,152*canvasH/240);
-		        pokemonSelf.setBitmap(Ui.loadResource(Rez.Drawables.eeveeBack));
-		        pokemonSelf.setAttack("Tackle");
-				break;
-			case(2):
 				// Squirtle
 			    pokemonSelf = new pokemon("Squirtle", ":L", 47*canvasW/240,159*canvasH/240);
 		        pokemonSelf.setBitmap(Ui.loadResource(Rez.Drawables.squirtleBack));
 		        pokemonSelf.setAttack("Bubble");
 				break;
-			case(3):
+			case(2):
 				// Flareon
 			    pokemonSelf = new pokemon("Flareon", ":L", 46*canvasW/240,150*canvasH/240);
 		        pokemonSelf.setBitmap(Ui.loadResource(Rez.Drawables.flareonBack));
 		        pokemonSelf.setAttack("Ember");
 				break;
+			case(3):
+				// Mew
+			    pokemonSelf = new pokemon("Mew", ":L", 35*canvasW/240,133*canvasH/240);
+		        pokemonSelf.setBitmap(Ui.loadResource(Rez.Drawables.mewBack));
+		        pokemonSelf.setAttack("Psywave");
+		        break;
+		    case(4):
+		    	// Mewtwo
+			    pokemonSelf = new pokemon("Mewtwo", ":L", 46*canvasW/240,150*canvasH/240);
+		        pokemonSelf.setBitmap(Ui.loadResource(Rez.Drawables.mewtwoBack));
+		        pokemonSelf.setAttack("Psywave");
+		        break;
+			//case(1):
+			//	// Eevee
+			//    pokemonSelf = new pokemon("Eevee", ":L", 42*canvasW/240,152*canvasH/240);
+		    //    pokemonSelf.setBitmap(Ui.loadResource(Rez.Drawables.eeveeBack));
+		    //    pokemonSelf.setAttack("Tackle");
+			//	break;
 			default:
 				break;
-			
 	    }
 	    return pokemonSelf;
     }
@@ -769,7 +867,7 @@ class PokeWatchView extends Ui.WatchFace {
 		function initialize(name, lvl, posX, posY) {
 			self.name = name;
 			self.lvl = lvl;
-			self.posX= posX;
+			self.posX = posX;
 			self.posY = posY;
 			self.offsetX = 0;
 			self.offsetY = 0;
