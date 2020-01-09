@@ -3,6 +3,8 @@ using Toybox.Application;
 
 class PokeWatchApp extends Application.AppBase {
 
+	var pokeView;
+	
     function initialize() {
         AppBase.initialize();
     }
@@ -17,13 +19,15 @@ class PokeWatchApp extends Application.AppBase {
 
     // Return the initial view of your application here
     function getInitialView() {
-    	// Since WatchFace takes no user input, simply returns the view
-        return [ new PokeWatchView() ];
+    	pokeView = new PokeWatchView();
+    	onSettingsChanged();
+        return [ pokeView ];
     }
 
-    //// New app settings have been received so trigger a UI update
-    //function onSettingsChanged() {
-    //    WatchUi.requestUpdate();
-    //}
+    // New app settings have been received so trigger a UI update
+    function onSettingsChanged() {
+    	pokeView.onSettingsChanged();
+        WatchUi.requestUpdate();
+    }
 
 }
