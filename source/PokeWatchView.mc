@@ -186,6 +186,9 @@ class PokeWatchView extends Ui.WatchFace {
 		if (App.getApp().getProperty("ShowDate")) {
 			drawDate(dc);
 		}
+		if (App.getApp().getProperty("ShowSteps")) {
+			drawSteps(dc);
+		}
         drawSelf(pokemonSelf, dc);
         drawInfoBox(boxX, boxY, dc);
  
@@ -340,26 +343,32 @@ class PokeWatchView extends Ui.WatchFace {
     // state of this View here. This includes freeing resources from
     // memory.
     function onHide() {
+    	// Kill active timer
+    	if (TIMER_1) {
+    		TIMER_1.stop();
+		}	
     }
     
     // Animation loop callback
     function timerCallback() {
     	// Redraw the canvas
     	Ui.requestUpdate();
-    
-    	TIMER_1.stop();
-    	TIMER_1 = new Timer.Timer();
-    	TIMER_1.start(method(:timerCallback), timerDelay, false);
     }
 
     // The user has just looked at their watch. Timers and animations may be started here.
     function onExitSleep() {
-    	sceneIdx = 0;
-    	isAnimating = true;
-    	yOffset = 0;
-    	timerDelay = 500;
-	   	TIMER_1 = new Timer.Timer();
-    	TIMER_1.start(method(:timerCallback), timerDelay, false);
+		try {
+			sceneIdx = 0;
+    		isAnimating = true;
+    		yOffset = 0;
+    		timerDelay = 500;
+	   		TIMER_1 = new Timer.Timer();
+    		TIMER_1.start(method(:timerCallback), timerDelay, true);
+		}
+		catch( ex ) {
+			error(ex);
+			onEnterSleep();
+		}
     }
 
     // Terminate any active timers and prepare for slow updates.
@@ -426,6 +435,14 @@ class PokeWatchView extends Ui.WatchFace {
     	
     	return null;
     }
+
+	function drawSteps(dc) {
+		// Get steps
+		var steps = getSteps();
+		var stepsString = Lang.format("$1$", [steps]);
+		dc.drawText(canvasW/2, 40*canvasH/240, pokeTextSmall, stepsString, Gfx.TEXT_JUSTIFY_CENTER);
+
+	}
 
     function writeOpponentAppears(opponent, canvasW, boxY, dc) {  
     	dc.drawText(canvasW/2, boxY + 12, pokeTextSmall, "A wild " + opponent.getName(), Gfx.TEXT_JUSTIFY_CENTER);
@@ -718,7 +735,7 @@ class PokeWatchView extends Ui.WatchFace {
         dc.setColor(Gfx.COLOR_BLACK, Gfx.COLOR_TRANSPARENT);
     }
     
-    // Returns the step progress in the form of a 
+    // Returns the step progress in the form of an integer between 0 and 100
     function getStepProgress(integer) {
     	// step progress
       	var thisActivity = ActivityMonitor.getInfo();
@@ -728,6 +745,12 @@ class PokeWatchView extends Ui.WatchFace {
 		stepProgress = ((steps.toFloat()/goal.toFloat())*integer).toNumber();
 		return stepProgress;
     }
+
+	// Returns the number of hundreds of steps as an integer 
+	function getSteps() {
+		var thisActivity = ActivityMonitor.getInfo();
+		return thisActivity.steps;
+	}
     
     // Picks an opponent first based on % of step goal, then randomly
     function selectOpponent(opponentList) {
