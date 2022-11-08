@@ -347,6 +347,12 @@ class PokeWatchView extends Ui.WatchFace {
     	if (TIMER_1) {
     		TIMER_1.stop();
 		}	
+		sceneIdx = 0;
+    	isAnimating = false;
+    	healthRemaining = 1;
+    	yOffset = 0;
+    	timerDelay = 1000;
+    	Ui.requestUpdate();
     }
     
     // Animation loop callback
@@ -362,28 +368,28 @@ class PokeWatchView extends Ui.WatchFace {
     		isAnimating = true;
     		yOffset = 0;
     		timerDelay = 500;
-	   		TIMER_1 = new Timer.Timer();
-    		TIMER_1.start(method(:timerCallback), timerDelay, true);
+    		if (TIMER_1 == null) {
+	   			TIMER_1 = new Timer.Timer();
+			}
+			TIMER_1.start(method(:timerCallback), timerDelay, true);
 		}
 		catch( ex ) {
-			error(ex);
 			onEnterSleep();
 		}
     }
 
     // Terminate any active timers and prepare for slow updates.
     function onEnterSleep() {
+    	// Kill active timer
+    	if (TIMER_1) {
+    		TIMER_1.stop();
+		}
     	sceneIdx = 0;
     	isAnimating = false;
     	healthRemaining = 1;
     	yOffset = 0;
     	timerDelay = 1000;
     	Ui.requestUpdate();
-    	
-    	// Kill active timer
-    	if (TIMER_1) {
-    		TIMER_1.stop();
-		}
     }
     
     // Sets a "settings changed" flag for the next screen update
